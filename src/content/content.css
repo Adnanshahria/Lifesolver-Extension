@@ -1,0 +1,355 @@
+/* ─── Focus Gate ──────────────────────────────────────────────────────────── */
+#ls-focus-gate {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  animation: ls-gate-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+#ls-focus-gate.ls-gate-exit {
+  animation: ls-gate-out 0.3s ease forwards !important;
+}
+
+@keyframes ls-gate-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes ls-gate-out {
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+/* ─── Backdrop ────────────────────────────────────────────────────────────── */
+.ls-gate-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(3, 7, 18, 0.82) !important;
+  backdrop-filter: blur(12px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+}
+
+/* ─── Card ────────────────────────────────────────────────────────────────── */
+.ls-gate-card {
+  position: relative !important;
+  z-index: 1 !important;
+  width: min(540px, 94vw) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: linear-gradient(160deg, rgba(15,23,42,0.97) 0%, rgba(8,20,45,0.99) 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.12) !important;
+  border-radius: 20px !important;
+  padding: 28px 28px 22px !important;
+  box-shadow:
+    0 0 0 1px rgba(99,179,237,0.08),
+    0 25px 50px rgba(0,0,0,0.7),
+    0 0 80px rgba(56,189,248,0.06) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(99,179,237,0.3) transparent !important;
+}
+
+.ls-gate-card::-webkit-scrollbar {
+  width: 4px !important;
+}
+.ls-gate-card::-webkit-scrollbar-track { background: transparent !important; }
+.ls-gate-card::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.3) !important; border-radius: 4px !important; }
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+.ls-gate-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 20px !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.ls-gate-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+}
+
+.ls-gate-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #34d399 !important;
+  box-shadow: 0 0 8px rgba(52,211,153,0.7) !important;
+  animation: ls-pulse 2s ease infinite !important;
+}
+
+@keyframes ls-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(52,211,153,0.7); }
+  50%       { box-shadow: 0 0 14px rgba(52,211,153,1); }
+}
+
+.ls-gate-time {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #fbbf24 !important;
+  background: rgba(251,191,36,0.1) !important;
+  border: 1px solid rgba(251,191,36,0.2) !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+}
+
+/* ─── Stat Cards Row ──────────────────────────────────────────────────────── */
+.ls-gate-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+  margin-bottom: 20px !important;
+}
+
+.ls-stat-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 14px 10px !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+  gap: 4px !important;
+}
+
+.ls-stat-tasks {
+  background: rgba(14,165,233,0.1) !important;
+  border: 1px solid rgba(14,165,233,0.2) !important;
+}
+.ls-stat-habits {
+  background: rgba(239,68,68,0.1) !important;
+  border: 1px solid rgba(239,68,68,0.2) !important;
+}
+.ls-stat-time {
+  background: rgba(168,85,247,0.1) !important;
+  border: 1px solid rgba(168,85,247,0.2) !important;
+}
+
+.ls-stat-icon {
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+.ls-stat-num {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #f1f5f9 !important;
+  line-height: 1.1 !important;
+}
+.ls-stat-tasks .ls-stat-num  { color: #38bdf8 !important; }
+.ls-stat-habits .ls-stat-num { color: #f87171 !important; }
+.ls-stat-time .ls-stat-num   { color: #c084fc !important; }
+
+.ls-stat-label {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────── */
+.ls-gate-divider {
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(148,163,184,0.15), transparent) !important;
+  margin: 0 0 20px !important;
+}
+
+/* ─── Questions ───────────────────────────────────────────────────────────── */
+.ls-gate-questions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.ls-question {
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  padding: 16px !important;
+  transition: border-color 0.3s !important;
+}
+.ls-question:hover {
+  border-color: rgba(99,179,237,0.2) !important;
+}
+
+.ls-q-hidden {
+  display: none !important;
+}
+
+.ls-q-reveal {
+  display: block !important;
+  animation: ls-q-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
+}
+
+@keyframes ls-q-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ls-q-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #cbd5e1 !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  line-height: 1.4 !important;
+}
+
+.ls-q-num {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #38bdf8 !important;
+  background: rgba(56,189,248,0.12) !important;
+  border: 1px solid rgba(56,189,248,0.2) !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  flex-shrink: 0 !important;
+  margin-top: 1px !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ─── Choice Buttons ──────────────────────────────────────────────────────── */
+.ls-choices {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.ls-choices-row {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+
+.ls-choice {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(56,189,248,0.25) !important;
+  background: rgba(56,189,248,0.06) !important;
+  color: #93c5fd !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-align: left !important;
+  width: 100% !important;
+  font-family: inherit !important;
+}
+
+.ls-choice:hover {
+  background: rgba(56,189,248,0.14) !important;
+  border-color: rgba(56,189,248,0.45) !important;
+  color: #bae6fd !important;
+  transform: translateX(3px) !important;
+}
+
+.ls-choice-no {
+  border-color: rgba(248,113,113,0.25) !important;
+  background: rgba(248,113,113,0.06) !important;
+  color: #fca5a5 !important;
+}
+
+.ls-choice-no:hover {
+  background: rgba(248,113,113,0.14) !important;
+  border-color: rgba(248,113,113,0.45) !important;
+  color: #fecaca !important;
+  transform: translateX(3px) !important;
+}
+
+.ls-choice-sm {
+  flex: 1 !important;
+  min-width: 0 !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 9px 8px !important;
+  font-size: 11px !important;
+}
+
+.ls-choice-selected {
+  border-color: rgba(52,211,153,0.6) !important;
+  background: rgba(52,211,153,0.12) !important;
+  color: #6ee7b7 !important;
+  transform: none !important;
+}
+
+.ls-choice-icon {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+/* ─── Final Action Buttons ────────────────────────────────────────────────── */
+.ls-gate-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-top: 20px !important;
+  animation: ls-q-in 0.4s ease forwards !important;
+}
+
+.ls-btn-proceed {
+  padding: 13px 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(56,189,248,0.35) !important;
+  background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(99,102,241,0.15)) !important;
+  color: #e2e8f0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+  letter-spacing: 0.3px !important;
+}
+
+.ls-btn-proceed:hover {
+  background: linear-gradient(135deg, rgba(56,189,248,0.25), rgba(99,102,241,0.25)) !important;
+  border-color: rgba(56,189,248,0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+.ls-btn-back {
+  padding: 11px 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(52,211,153,0.3) !important;
+  background: rgba(52,211,153,0.07) !important;
+  color: #6ee7b7 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+}
+
+.ls-btn-back:hover {
+  background: rgba(52,211,153,0.15) !important;
+  border-color: rgba(52,211,153,0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+.ls-btn-back-highlight {
+  border-color: rgba(52,211,153,0.7) !important;
+  background: rgba(52,211,153,0.18) !important;
+  box-shadow: 0 0 20px rgba(52,211,153,0.2) !important;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
+.ls-gate-footer {
+  text-align: center !important;
+  margin-top: 16px !important;
+  font-size: 10px !important;
+  color: rgba(100,116,139,0.7) !important;
+  font-family: inherit !important;
+}

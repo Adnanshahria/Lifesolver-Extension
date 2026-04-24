@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f172a;
+  --color-card: rgba(30, 41, 59, 0.8);
+  --color-border: rgba(148, 163, 184, 0.12);
+  --color-accent: #0891b2;
+  --color-accent-light: #06b6d4;
+  --color-accent-glow: rgba(8, 145, 178, 0.2);
+}
+
+html, body {
+  background-color: #1a1a1a; /* Subtle gray bezel */
+  color: #f1f5f9;
+  width: 400px;
+  height: 600px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  box-sizing: border-box;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 16px);
+  margin: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #09090b; /* Solid dark theme */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); /* Floating shadow effect */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.6);
+  border-radius: 4px;
+}
+
+/* Glassmorphism utilities */
+.glass-card {
+  background: var(--color-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+}

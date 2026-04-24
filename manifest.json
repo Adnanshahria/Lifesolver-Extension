@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "LifeSolver - Focus & Productivity",
+  "version": "1.0.0",
+  "description": "Replace social media distractions with your LifeSolver tasks, habits, and goals. Stay focused, stay productive.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "LifeSolver",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png",
+      "128": "icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://*.facebook.com/*",
+        "https://*.instagram.com/*",
+        "https://*.twitter.com/*",
+        "https://*.x.com/*",
+        "https://*.tiktok.com/*",
+        "https://*.reddit.com/*"
+      ],
+      "js": ["src/content/content.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}
