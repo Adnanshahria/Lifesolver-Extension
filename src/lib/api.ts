@@ -155,5 +155,38 @@ export const API = {
     } catch {
       return { error: "Network error" };
     }
+  },
+
+  requestDetoxOtp: async () => {
+    const token = await API.getToken();
+    if (!token) return { success: false, error: "Not authenticated" };
+    try {
+      const apiUrl = await API.getApiUrl();
+      const res = await fetch(`${apiUrl}/auth/request-detox-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: "Network error" };
+    }
+  },
+
+  verifyDetoxOtp: async (otp: string) => {
+    const token = await API.getToken();
+    if (!token) return { success: false, error: "Not authenticated" };
+    try {
+      const apiUrl = await API.getApiUrl();
+      const res = await fetch(`${apiUrl}/auth/verify-detox-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ otp })
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: "Network error" };
+    }
   }
 };

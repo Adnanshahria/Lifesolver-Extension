@@ -33,13 +33,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.youtube.com/*",
-        "https://*.facebook.com/*",
-        "https://*.instagram.com/*",
-        "https://*.twitter.com/*",
-        "https://*.x.com/*",
-        "https://*.tiktok.com/*",
-        "https://*.reddit.com/*"
+        "<all_urls>"
       ],
       "js": ["src/content/content.ts"],
       "run_at": "document_idle"

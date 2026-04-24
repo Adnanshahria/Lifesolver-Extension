@@ -39,16 +39,27 @@
   max-height: 90vh !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: linear-gradient(160deg, rgba(15,23,42,0.97) 0%, rgba(8,20,45,0.99) 100%) !important;
-  border: 1px solid rgba(148, 163, 184, 0.12) !important;
-  border-radius: 20px !important;
-  padding: 28px 28px 22px !important;
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 20, 45, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  padding: 32px !important;
   box-shadow:
-    0 0 0 1px rgba(99,179,237,0.08),
-    0 25px 50px rgba(0,0,0,0.7),
-    0 0 80px rgba(56,189,248,0.06) !important;
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    0 0 100px rgba(56, 189, 248, 0.08) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(99,179,237,0.3) transparent !important;
+  scrollbar-color: rgba(56, 189, 248, 0.2) transparent !important;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease !important;
+}
+
+.ls-gate-card:hover {
+  transform: translateY(-4px) scale(1.005) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 30px 60px rgba(0, 0, 0, 0.7),
+    0 0 120px rgba(56, 189, 248, 0.12) !important;
 }
 
 .ls-gate-card::-webkit-scrollbar {
@@ -106,8 +117,8 @@
 .ls-gate-stats {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 10px !important;
-  margin-bottom: 20px !important;
+  gap: 12px !important;
+  margin-bottom: 24px !important;
 }
 
 .ls-stat-card {
@@ -115,10 +126,19 @@
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 14px 10px !important;
-  border-radius: 12px !important;
+  padding: 16px 12px !important;
+  border-radius: 16px !important;
   text-align: center !important;
-  gap: 4px !important;
+  gap: 6px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ls-stat-card:hover {
+  transform: translateY(-4px) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .ls-stat-tasks {
@@ -190,40 +210,28 @@
   animation: ls-q-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
 }
 
-@keyframes ls-q-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+/* ─── Staggered Animations ────────────────────────────────────────────────── */
+.ls-animate {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: ls-slide-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
-.ls-q-label {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #cbd5e1 !important;
-  margin-bottom: 12px !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 10px !important;
-  line-height: 1.4 !important;
+@keyframes ls-slide-up {
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.ls-q-num {
-  font-size: 10px !important;
-  font-weight: 800 !important;
-  color: #38bdf8 !important;
-  background: rgba(56,189,248,0.12) !important;
-  border: 1px solid rgba(56,189,248,0.2) !important;
-  border-radius: 6px !important;
-  padding: 2px 6px !important;
-  flex-shrink: 0 !important;
-  margin-top: 1px !important;
-  letter-spacing: 0.5px !important;
-}
+.ls-delay-1 { animation-delay: 0.1s !important; }
+.ls-delay-2 { animation-delay: 0.2s !important; }
+.ls-delay-3 { animation-delay: 0.3s !important; }
+.ls-delay-4 { animation-delay: 0.4s !important; }
+.ls-delay-5 { animation-delay: 0.5s !important; }
 
 /* ─── Choice Buttons ──────────────────────────────────────────────────────── */
 .ls-choices {
   display: flex !important;
   flex-direction: column !important;
-  gap: 8px !important;
+  gap: 10px !important;
 }
 
 .ls-choices-row {
@@ -286,9 +294,40 @@
 }
 
 .ls-choice-icon {
-  font-size: 14px !important;
+  font-size: 16px !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
+  transition: transform 0.3s !important;
+}
+
+.ls-choice:hover .ls-choice-icon {
+  transform: scale(1.2) rotate(5deg) !important;
+}
+
+/* ─── Budget Progress ─────────────────────────────────────────────────────── */
+.ls-budget-bar {
+  height: 4px !important;
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 10px !important;
+  margin-top: 8px !important;
+  overflow: hidden !important;
+}
+
+.ls-budget-fill {
+  height: 100% !important;
+  border-radius: 10px !important;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ls-budget-fill-ok {
+  background: linear-gradient(90deg, #10b981, #34d399) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+}
+
+.ls-budget-fill-over {
+  background: linear-gradient(90deg, #ef4444, #f87171) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
 }
 
 /* ─── Final Action Buttons ────────────────────────────────────────────────── */
@@ -353,3 +392,24 @@
   color: rgba(100,116,139,0.7) !important;
   font-family: inherit !important;
 }
+
+/* ─── Checkout Specific Polish ────────────────────────────────────────────── */
+.ls-stat-budget-over {
+  color: #f87171 !important;
+}
+.ls-stat-budget-ok {
+  color: #34d399 !important;
+}
+
+.ls-btn-proceed-secondary {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  margin-top: 8px !important;
+}
+
+.ls-btn-proceed-secondary:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+

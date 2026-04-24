@@ -133,6 +133,45 @@ async function syncData() {
 
     const habits = await API.fetchHabits();
     await chrome.storage.local.set({ ls_cached_habits: habits });
+
+    const finance = await API.fetchFinance();
+    await chrome.storage.local.set({ ls_cached_finance: finance });
+
+    const budgets = await API.fetchBudgets();
+    await chrome.storage.local.set({ ls_cached_budgets: budgets });
+
+    // Calculate remaining budget
+    const regularFinance = finance.filter((e: any) => !e.is_special);
+    const regularBudgets = budgets.filter((b: any) => !b.is_special);
+    const budgetGoals = regularBudgets.filter((b: any) => b.type === "budget");
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const primaryBudget = budgetGoals.find((b: any) => b.period === "monthly" && b.start_date?.startsWith(currentMonthStr))
+        || budgetGoals.find((b: any) => b.period === "monthly" && !b.start_date)
+        || budgetGoals.find((b: any) => b.period === "monthly")
+        || budgetGoals[0];
+
+    if (primaryBudget) {
+      const budgetStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const budgetEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      
+      const periodExpenses = regularFinance.filter((e: any) => {
+          if (e.type !== "expense") return false;
+          const expenseDate = new Date(e.date);
+          if (expenseDate < budgetStart || expenseDate > budgetEnd) return false;
+          if (primaryBudget.category && e.category !== primaryBudget.category) return false;
+          return true;
+      });
+      const budgetSpent = periodExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+      const budgetTarget = primaryBudget.target_amount;
+      const budgetRemaining = budgetTarget - budgetSpent;
+      
+      await chrome.storage.local.set({ ls_budget_left: budgetRemaining });
+    } else {
+      await chrome.storage.local.set({ ls_budget_left: null });
+    }
+
   } catch (err) {
     console.warn("Sync failed", err);
   }
@@ -140,7 +179,7 @@ async function syncData() {
   try {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
-      if (tab.id && tab.url && extractDomain(tab.url)) {
+      if (tab.id && tab.url) {
         chrome.tabs.sendMessage(tab.id, { type: "LS_DATA_UPDATED" }).catch(() => {});
       }
     }
@@ -152,6 +191,57 @@ chrome.alarms.create("ls_flush_time", { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "ls_sync_data") await syncData();
   else if (alarm.name === "ls_flush_time") await flushActiveTime();
+  else if (alarm.name === "ls_detox_end") {
+    // Detox timer expired — clear state and notify all tabs
+    await chrome.storage.local.set({ ls_detox_active: false, ls_detox_end_time: null });
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id && tab.url) {
+          chrome.tabs.sendMessage(tab.id, { type: "LS_DETOX_ENDED" }).catch(() => {});
+        }
+      }
+    } catch {}
+  }
+});
+
+// ─── Detox: check if a domain is blocked ────────────────────────────────────
+async function isDetoxBlocked(url: string): Promise<boolean> {
+  try {
+    const data = await chrome.storage.local.get(["ls_detox_active", "ls_detox_end_time", "ls_detox_custom_sites"]);
+    if (!data.ls_detox_active) return false;
+    if (data.ls_detox_end_time && Date.now() >= (data.ls_detox_end_time as number)) {
+      // Timer expired but alarm hasn't fired yet — clean up
+      await chrome.storage.local.set({ ls_detox_active: false, ls_detox_end_time: null });
+      return false;
+    }
+
+    let hostname = new URL(url).hostname;
+    if (hostname.startsWith("www.")) hostname = hostname.slice(4);
+
+    // Check built-in social media domains
+    for (const d of SOCIAL_MEDIA_DOMAINS) {
+      if (hostname === d || hostname.endsWith("." + d)) return true;
+    }
+
+    // Check custom blocked sites
+    const customSites = (data.ls_detox_custom_sites as string[]) || [];
+    for (const site of customSites) {
+      const clean = site.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").toLowerCase();
+      if (clean && (hostname === clean || hostname.endsWith("." + clean))) return true;
+    }
+  } catch {}
+  return false;
+}
+
+// Notify content script when a tab navigates to a blocked domain during detox
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, _tab) => {
+  if (changeInfo.url) {
+    const blocked = await isDetoxBlocked(changeInfo.url);
+    if (blocked) {
+      chrome.tabs.sendMessage(tabId, { type: "LS_DETOX_CHECK" }).catch(() => {});
+    }
+  }
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -185,6 +275,54 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (_sender.tab?.id) {
       chrome.tabs.remove(_sender.tab.id).catch(() => {});
     }
+    return true;
+  }
+
+  // ─── Detox Messages ──────────────────────────────────────────────────────
+  if (msg.type === "LS_DETOX_START") {
+    const { duration, customSites } = msg;
+    const endTime = Date.now() + duration;
+    chrome.storage.local.set({
+      ls_detox_active: true,
+      ls_detox_end_time: endTime,
+      ls_detox_custom_sites: customSites || [],
+    }).then(() => {
+      chrome.alarms.create("ls_detox_end", { when: endTime });
+      // Notify all tabs to check if they should be blocked
+      chrome.tabs.query({}).then(tabs => {
+        for (const tab of tabs) {
+          if (tab.id && tab.url) {
+            chrome.tabs.sendMessage(tab.id, { type: "LS_DETOX_CHECK" }).catch(() => {});
+          }
+        }
+      });
+      sendResponse({ success: true, endTime });
+    });
+    return true;
+  }
+  if (msg.type === "LS_DETOX_STOP") {
+    chrome.storage.local.set({ ls_detox_active: false, ls_detox_end_time: null }).then(() => {
+      chrome.alarms.clear("ls_detox_end");
+      // Notify all tabs to remove detox overlay
+      chrome.tabs.query({}).then(tabs => {
+        for (const tab of tabs) {
+          if (tab.id && tab.url) {
+            chrome.tabs.sendMessage(tab.id, { type: "LS_DETOX_ENDED" }).catch(() => {});
+          }
+        }
+      });
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+  if (msg.type === "LS_DETOX_STATUS") {
+    chrome.storage.local.get(["ls_detox_active", "ls_detox_end_time", "ls_detox_custom_sites"]).then(data => {
+      sendResponse({
+        active: !!data.ls_detox_active,
+        endTime: data.ls_detox_end_time || null,
+        customSites: data.ls_detox_custom_sites || [],
+      });
+    });
     return true;
   }
 });

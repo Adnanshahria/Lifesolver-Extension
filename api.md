@@ -23,6 +23,18 @@ By default, the Extension targets the main web app's API endpoint:
 - **Extension Usage:** `src/lib/api.ts` -> `API.verifyAuth()`
 - **Description:** Uses the locally stored bearer token to verify if the user's session is still active. It is triggered automatically when the extension UI mounts.
 
+### Request Detox OTP
+- **Endpoint:** `POST /auth/request-detox-otp`
+- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/request-detox-otp`
+- **Extension Usage:** `src/lib/api.ts` -> `API.requestDetoxOtp()`
+- **Description:** Used during the Dopamine Detox mode. When a user tries to end a detox session early, this endpoint sends a 6-digit OTP code to the logged-in user's email address.
+
+### Verify Detox OTP
+- **Endpoint:** `POST /auth/verify-detox-otp`
+- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/verify-detox-otp`
+- **Extension Usage:** `src/lib/api.ts` -> `API.verifyDetoxOtp()`
+- **Description:** Verifies the 6-digit OTP entered by the user to securely end an active Dopamine Detox session early.
+
 ---
 
 ## 2. Data Integration APIs

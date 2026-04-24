@@ -1,14 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API } from './lib/api';
 import { 
   LogOut, LayoutDashboard, MessageSquare, 
-  Globe, CheckSquare, Activity, Send, BarChart2, Trash2, DollarSign, Target, Check
+  Globe, CheckSquare, Activity, Send, BarChart2, Trash2, DollarSign, Target, Check,
+  Shield, Plus, X, Clock, Zap
 } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'dashboard'|'chat'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'chat'|'detox'>('dashboard');
+
+  // Detox State
+  const [detoxActive, setDetoxActive] = useState(false);
+  const [detoxEndTime, setDetoxEndTime] = useState<number | null>(null);
+  const [detoxCustomSites, setDetoxCustomSites] = useState<string[]>([]);
+  const [detoxTimeLeft, setDetoxTimeLeft] = useState('00:00:00');
+  const [detoxProgress, setDetoxProgress] = useState(0);
+  const [detoxDuration, setDetoxDuration] = useState<number | null>(null);
+  const [detoxSelectedPreset, setDetoxSelectedPreset] = useState<string | null>(null);
+  const [detoxCustomMinutes, setDetoxCustomMinutes] = useState('');
+  const [detoxNewSite, setDetoxNewSite] = useState('');
+  
+  const [detoxOtpRequested, setDetoxOtpRequested] = useState(false);
+  const [detoxOtp, setDetoxOtp] = useState('');
+  const [detoxOtpError, setDetoxOtpError] = useState('');
+  const [detoxOtpLoading, setDetoxOtpLoading] = useState(false);
 
   // Dashboard Data
   const [usage, setUsage] = useState<Record<string, number>>({});
@@ -218,6 +235,105 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [loginErr, setLoginErr] = useState("");
 
+  // ─── Detox helpers ──────────────────────────────────────────────────────────
+  const DETOX_PRESETS = [
+    { label: '30m', ms: 30 * 60 * 1000 },
+    { label: '1h', ms: 60 * 60 * 1000 },
+    { label: '2h', ms: 2 * 60 * 60 * 1000 },
+    { label: '4h', ms: 4 * 60 * 60 * 1000 },
+    { label: '8h', ms: 8 * 60 * 60 * 1000 },
+  ];
+
+  const BUILTIN_BLOCKED = [
+    'youtube.com', 'facebook.com', 'instagram.com',
+    'twitter.com', 'x.com', 'tiktok.com', 'reddit.com',
+  ];
+
+  const loadDetoxState = useCallback(() => {
+    chrome.storage.local.get(['ls_detox_active', 'ls_detox_end_time', 'ls_detox_custom_sites', 'ls_detox_duration']).then(data => {
+      setDetoxActive(!!data.ls_detox_active);
+      setDetoxEndTime((data.ls_detox_end_time as number) || null);
+      setDetoxCustomSites((data.ls_detox_custom_sites as string[]) || []);
+      if (data.ls_detox_duration) setDetoxDuration(data.ls_detox_duration as number);
+    });
+  }, []);
+
+  const handleStartDetox = () => {
+    let durationMs = detoxSelectedPreset === 'custom'
+      ? (parseInt(detoxCustomMinutes) || 0) * 60 * 1000
+      : DETOX_PRESETS.find(p => p.label === detoxSelectedPreset)?.ms || 0;
+    if (durationMs <= 0) return;
+
+    chrome.storage.local.set({ ls_detox_duration: durationMs });
+    chrome.runtime.sendMessage({
+      type: 'LS_DETOX_START',
+      duration: durationMs,
+      customSites: detoxCustomSites,
+    }, (res: any) => {
+      if (res?.success) {
+        setDetoxActive(true);
+        setDetoxEndTime(res.endTime);
+        setDetoxDuration(durationMs);
+        setDetoxOtpRequested(false);
+        setDetoxOtp('');
+        setDetoxOtpError('');
+      }
+    });
+  };
+
+  const handleStopDetox = () => {
+    chrome.runtime.sendMessage({ type: 'LS_DETOX_STOP' }, () => {
+      setDetoxActive(false);
+      setDetoxEndTime(null);
+      setDetoxOtpRequested(false);
+      setDetoxOtp('');
+      setDetoxOtpError('');
+    });
+  };
+
+  const handleRequestDetoxEnd = async () => {
+    setDetoxOtpLoading(true);
+    setDetoxOtpError('');
+    const res = await API.requestDetoxOtp();
+    if (res.success) {
+      setDetoxOtpRequested(true);
+    } else {
+      setDetoxOtpError(res.error || "Failed to send code");
+    }
+    setDetoxOtpLoading(false);
+  };
+
+  const handleVerifyDetoxEnd = async () => {
+    if (detoxOtp.length < 6) {
+      setDetoxOtpError("Please enter a 6-digit code");
+      return;
+    }
+    setDetoxOtpLoading(true);
+    setDetoxOtpError('');
+    const res = await API.verifyDetoxOtp(detoxOtp);
+    if (res.success) {
+      handleStopDetox();
+    } else {
+      setDetoxOtpError(res.error || "Invalid code");
+    }
+    setDetoxOtpLoading(false);
+  };
+
+  const handleAddCustomSite = () => {
+    const site = detoxNewSite.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
+    if (!site || detoxCustomSites.includes(site) || BUILTIN_BLOCKED.includes(site)) return;
+    const updated = [...detoxCustomSites, site];
+    setDetoxCustomSites(updated);
+    setDetoxNewSite('');
+    chrome.storage.local.set({ ls_detox_custom_sites: updated });
+  };
+
+  const handleRemoveCustomSite = (site: string) => {
+    const updated = detoxCustomSites.filter(s => s !== site);
+    setDetoxCustomSites(updated);
+    chrome.storage.local.set({ ls_detox_custom_sites: updated });
+  };
+
   useEffect(() => {
     API.verifyAuth().then(res => {
       if (res.authenticated && res.user) {
@@ -231,7 +347,8 @@ export default function App() {
         setMessages(data.ls_chat_history as {role: string, content: string}[]);
       }
     });
-  }, []);
+    loadDetoxState();
+  }, [loadDetoxState]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -361,6 +478,33 @@ CONTEXT:
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, chatLoading]);
+
+  // Detox countdown timer
+  useEffect(() => {
+    if (!detoxActive || !detoxEndTime) return;
+    const tick = () => {
+      const remaining = detoxEndTime - Date.now();
+      if (remaining <= 0) {
+        setDetoxTimeLeft('00:00:00');
+        setDetoxProgress(100);
+        setDetoxActive(false);
+        setDetoxEndTime(null);
+        return;
+      }
+      const totalSec = Math.ceil(remaining / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      setDetoxTimeLeft(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
+      if (detoxDuration) {
+        const elapsed = detoxDuration - remaining;
+        setDetoxProgress(Math.min(100, (elapsed / detoxDuration) * 100));
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [detoxActive, detoxEndTime, detoxDuration]);
 
 
 
@@ -527,6 +671,17 @@ CONTEXT:
         >
           <span className="flex items-center gap-1.5"><MessageSquare size={14} /> Intelligence</span>
           {tab === 'chat' && <div className="absolute bottom-0 left-0 h-[2px] w-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]" />}
+        </button>
+        <button 
+          onClick={() => { setTab('detox'); loadDetoxState(); }}
+          className={`relative py-3 text-xs font-medium tracking-wide transition-colors ${tab === 'detox' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+        >
+          <span className="flex items-center gap-1.5">
+            <Shield size={14} className={detoxActive ? 'text-purple-400' : ''} />
+            Detox
+            {detoxActive && <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />}
+          </span>
+          {tab === 'detox' && <div className="absolute bottom-0 left-0 h-[2px] w-full bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />}
         </button>
       </nav>
 
@@ -707,6 +862,225 @@ CONTEXT:
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {tab === 'detox' && (
+          <div className="space-y-4 pb-4">
+            {!detoxActive ? (
+              /* ─── SETUP MODE ─── */
+              <>
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20">
+                    <Shield size={20} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-white/90">Dopamine Detox</h2>
+                    <p className="text-[10px] text-white/40">Block distractions. Reclaim focus.</p>
+                  </div>
+                </div>
+
+                {/* Duration Picker */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl">
+                  <h3 className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-white/80 uppercase mb-3">
+                    <Clock size={12} className="text-purple-400" /> Duration
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {DETOX_PRESETS.map(p => (
+                      <button
+                        key={p.label}
+                        onClick={() => { setDetoxSelectedPreset(p.label); setDetoxCustomMinutes(''); }}
+                        className={`rounded-xl border py-2.5 text-xs font-semibold transition-all ${
+                          detoxSelectedPreset === p.label
+                            ? 'border-purple-500/50 bg-purple-500/15 text-purple-300 shadow-[0_0_15px_rgba(147,51,234,0.15)]'
+                            : 'border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.05] hover:text-white/70'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setDetoxSelectedPreset('custom')}
+                      className={`rounded-xl border py-2.5 text-xs font-semibold transition-all ${
+                        detoxSelectedPreset === 'custom'
+                          ? 'border-purple-500/50 bg-purple-500/15 text-purple-300 shadow-[0_0_15px_rgba(147,51,234,0.15)]'
+                          : 'border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.05] hover:text-white/70'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                  </div>
+                  {detoxSelectedPreset === 'custom' && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="number" min="1" placeholder="Minutes"
+                        value={detoxCustomMinutes}
+                        onChange={e => setDetoxCustomMinutes(e.target.value)}
+                        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-purple-500/50"
+                      />
+                      <span className="text-[10px] text-white/40">min</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Blocked Sites */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl">
+                  <h3 className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-white/80 uppercase mb-3">
+                    <Zap size={12} className="text-purple-400" /> Blocked Sites
+                  </h3>
+
+                  {/* Built-in badges */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {BUILTIN_BLOCKED.map(d => (
+                      <span key={d} className="inline-flex items-center rounded-full bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 text-[9px] font-medium text-purple-300">
+                        {d.replace('.com', '')}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Custom sites */}
+                  {detoxCustomSites.length > 0 && (
+                    <div className="space-y-1.5 mb-3">
+                      {detoxCustomSites.map(site => (
+                        <div key={site} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-1.5">
+                          <span className="text-[11px] text-white/70">{site}</span>
+                          <button
+                            onClick={() => handleRemoveCustomSite(site)}
+                            className="rounded p-0.5 text-white/30 hover:text-rose-400 transition-colors"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new site */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text" placeholder="Add domain (e.g. netflix.com)"
+                      value={detoxNewSite}
+                      onChange={e => setDetoxNewSite(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddCustomSite()}
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-purple-500/50"
+                    />
+                    <button
+                      onClick={handleAddCustomSite}
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 hover:bg-purple-500/20 hover:text-purple-300 hover:border-purple-500/30 transition-all"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Start Button */}
+                <button
+                  onClick={handleStartDetox}
+                  disabled={!detoxSelectedPreset || (detoxSelectedPreset === 'custom' && !detoxCustomMinutes)}
+                  className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 p-[1px] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:hover:scale-100"
+                >
+                  <div className="flex h-full w-full items-center justify-center gap-2 rounded-2xl bg-[#09090b] py-3.5 transition-colors group-hover:bg-transparent">
+                    <Shield size={16} className="text-purple-300" />
+                    <span className="text-sm font-bold tracking-wide text-white">ACTIVATE DETOX</span>
+                  </div>
+                </button>
+              </>
+            ) : (
+              /* ─── ACTIVE MODE ─── */
+              <>
+                {/* Animated Header */}
+                <div className="flex flex-col items-center pt-2">
+                  <div className="relative mb-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 shadow-[0_0_30px_rgba(147,51,234,0.3)]" style={{animation: 'pulse 2s ease-in-out infinite'}}>
+                      <Shield size={28} className="text-purple-400" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-purple-400 animate-ping" />
+                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-purple-400" />
+                  </div>
+                  <h2 className="text-lg font-bold tracking-tight" style={{background: 'linear-gradient(135deg, #c084fc, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Detox Active</h2>
+                  <p className="text-[10px] text-white/40 mt-0.5">Stay strong. You've got this.</p>
+                </div>
+
+                {/* Timer */}
+                <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.05] p-4 text-center backdrop-blur-xl">
+                  <div className="text-4xl font-extrabold tracking-wider text-white tabular-nums" style={{textShadow: '0 0 30px rgba(147,51,234,0.4)'}}>
+                    {detoxTimeLeft}
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold tracking-[2px] uppercase text-white/30">Time Remaining</div>
+                  <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/5">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(147,51,234,0.5)] transition-all duration-1000"
+                      style={{width: `${detoxProgress}%`}}
+                    />
+                  </div>
+                </div>
+
+                {/* Blocked Sites Summary */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl">
+                  <h3 className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-white/80 uppercase mb-2">
+                    <Zap size={12} className="text-purple-400" /> Blocked ({BUILTIN_BLOCKED.length + detoxCustomSites.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {BUILTIN_BLOCKED.map(d => (
+                      <span key={d} className="inline-flex items-center rounded-full bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 text-[9px] font-medium text-rose-300">
+                        🚫 {d.replace('.com', '')}
+                      </span>
+                    ))}
+                    {detoxCustomSites.map(d => (
+                      <span key={d} className="inline-flex items-center rounded-full bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 text-[9px] font-medium text-rose-300">
+                        🚫 {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* End Early OTP Flow */}
+                {!detoxOtpRequested ? (
+                  <button
+                    disabled={detoxOtpLoading}
+                    onClick={handleRequestDetoxEnd}
+                    className="w-full rounded-xl border border-white/5 bg-white/[0.02] py-2.5 text-xs font-medium text-white/30 hover:text-white/50 hover:bg-white/[0.04] transition-all disabled:opacity-50"
+                  >
+                    {detoxOtpLoading ? 'Sending Code...' : 'End Detox Early'}
+                  </button>
+                ) : (
+                  <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-3 space-y-3">
+                    <div className="text-center">
+                      <p className="text-[11px] text-rose-300 font-medium">Verification Required</p>
+                      <p className="text-[9px] text-rose-300/60 mt-0.5">We've sent a 6-digit code to your email. Enter it below to end your detox early.</p>
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="••••••"
+                        value={detoxOtp}
+                        onChange={(e) => setDetoxOtp(e.target.value.replace(/\D/g, ''))}
+                        className="w-full rounded-xl border border-rose-500/30 bg-rose-900/20 px-3 py-2 text-center text-sm font-medium tracking-[0.5em] text-white outline-none focus:border-rose-400/50"
+                      />
+                      {detoxOtpError && <p className="text-center text-[9px] text-rose-400 mt-1">{detoxOtpError}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={detoxOtpLoading}
+                        onClick={() => { setDetoxOtpRequested(false); setDetoxOtp(''); setDetoxOtpError(''); }}
+                        className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-medium text-white/60 hover:bg-white/10 transition-all disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        disabled={detoxOtpLoading || detoxOtp.length < 6}
+                        onClick={handleVerifyDetoxEnd}
+                        className="flex-1 rounded-xl border border-rose-500/30 bg-rose-500/10 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-50"
+                      >
+                        {detoxOtpLoading ? '...' : 'Verify & End'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
