@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# 🚀 LifeSolver: The Growth Hacker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Reclaim your focus. Replace distractions with growth.**
 
-Currently, two official plugins are available:
+LifeSolver is a powerful browser extension designed to inject intentionality into your digital life. It replaces mindless scrolling with your real-time tasks, habits, and goals.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+### 📥 How to Install
+1. **Clone** the repository.
+2. Run `npm install` inside the `Extension` directory.
+3. Run `npm run build`.
+4. Open **Chrome** and go to `chrome://extensions`.
+5. Enable **Developer mode** (top right).
+6. Click **Load unpacked** and select the `Extension/dist` folder.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+### 🌐 Main Website
+Check out the full platform at: **[life-solver.vercel.app](https://life-solver.vercel.app)**
+This is a Supportive Extension for the webapp- link - https://life-solver.vercel.app   . 
+User Must create an account to the main site to login to the extension. 
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🛠️ Built With
+- **Framework:** [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+- **Animations:** [Framer Motion](https://www.framer.com/motion/)
+- **Icons:** [Lucide React](https://lucide.dev/)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 🎯 Why LifeSolver?
+The modern web is built to capture your attention. LifeSolver flips the script by using "Growth Hacker" mechanics—adding psychological friction to distracting sites while making your personal growth the path of least resistance.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### ✨ Key Features
+- **📊 Focus Dashboard:** Real-time browsing analytics, peak hour tracking, and productivity budgets.
+- **🧘 Friction Mechanics:** Animated breathing gates and friction scores to break the cycle of impulsive clicks.
+- **🛡️ Smart Detox:** OTP-verified detox mode and an integrated porn blocker for deep focus.
+- **🧠 AI Sidekick:** An intelligent chat interface to manage your habits and tasks without leaving the tab.
+- **📝 Growth Insights:** Reflective journaling prompts and batch-synced friction analytics.
+- **🔄 Seamless Sync:** All your extension data automatically syncs with the LifeSolver main platform.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+*Stay focused. Stay productive. Solve your life.*
