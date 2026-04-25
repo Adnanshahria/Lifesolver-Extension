@@ -1,6 +1,6 @@
 // ─── LifeSolver Extension API Layer ───
 
-const DEFAULT_API_URL = "https://lifeos-test.vercel.app/api";
+const DEFAULT_API_URL = "https://life-solver.vercel.app/api";
 
 export const API = {
   getApiUrl: async () => {
@@ -102,7 +102,7 @@ export const API = {
     if (!token) return [];
     try {
       const apiUrl = await API.getApiUrl();
-      const res = await fetch(`${apiUrl}/data/habits`, {
+      const res = await fetch(`${apiUrl}/data/habits/all`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       return res.ok ? await res.json() : [];

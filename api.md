@@ -1,72 +1,75 @@
 # LifeSolver Extension API Documentation
 
-This document outlines all the backend API endpoints consumed by the LifeSolver Browser Extension. These APIs are hosted and served by the main LifeSolver web application (located in the `Whn Web` folder) to provide a shared data state across the web dashboard and the browser extension.
-
-## Base URL
-By default, the Extension targets the main web app's API endpoint:
-`https://lifeos-test.vercel.app/api`
-*(This can be dynamically overridden in `chrome.storage.local` via the `ls_api_url` key).*
+This document outlines the API endpoints consumed by the LifeSolver Browser Extension. The Extension is wired directly to the `LiveSolver Main Website` microservices architecture, which consists of the `auth-service` and `data-service`.
 
 ---
 
-## 1. Authentication APIs
+## 1. Base URL
+
+**Target (LiveSolver Main Website):**
+`https://life-solver.vercel.app/api`
+
+The default base URL targets the main site's unified API endpoints. *(This can be dynamically overridden in `chrome.storage.local` via the `ls_api_url` key).*
+
+---
+
+## 2. Authentication APIs (`/api/auth/*`)
+
+The `auth-service` handles all user authentication. 
 
 ### User Login
-- **Endpoint:** `POST /auth/login`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/login`
+- **Endpoint:** `POST /api/auth/login`
 - **Extension Usage:** `src/lib/api.ts` -> `API.login()`
 - **Description:** Authenticates the user with email and password. On success, returns an auth token and user profile data which are immediately cached in the extension's `chrome.storage.local`.
 
 ### Verify Auth / Get Me
-- **Endpoint:** `GET /auth/me`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/me`
+- **Endpoint:** `GET /api/auth/me`
 - **Extension Usage:** `src/lib/api.ts` -> `API.verifyAuth()`
-- **Description:** Uses the locally stored bearer token to verify if the user's session is still active. It is triggered automatically when the extension UI mounts.
+- **Description:** Uses the locally stored bearer token to verify if the user's session is still active.
 
-### Request Detox OTP
-- **Endpoint:** `POST /auth/request-detox-otp`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/request-detox-otp`
-- **Extension Usage:** `src/lib/api.ts` -> `API.requestDetoxOtp()`
-- **Description:** Used during the Dopamine Detox mode. When a user tries to end a detox session early, this endpoint sends a 6-digit OTP code to the logged-in user's email address.
-
-### Verify Detox OTP
-- **Endpoint:** `POST /auth/verify-detox-otp`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/auth/verify-detox-otp`
-- **Extension Usage:** `src/lib/api.ts` -> `API.verifyDetoxOtp()`
-- **Description:** Verifies the 6-digit OTP entered by the user to securely end an active Dopamine Detox session early.
+### Detox OTP Flow
+- **Request Endpoint:** `POST /api/auth/request-detox-otp`
+- **Verify Endpoint:** `POST /api/auth/verify-detox-otp`
+- **Extension Usage:** `src/lib/api.ts` -> `API.requestDetoxOtp()` & `API.verifyDetoxOtp()`
+- **Description:** Manages the Dopamine Detox flow by sending a 6-digit OTP code to the user's email to prevent impulsive session termination, and verifying it securely.
 
 ---
 
-## 2. Data Integration APIs
+## 3. Data Integration APIs (`/api/data/*`)
+
+The `data-service` provides dynamic routing for all data tables. 
 
 ### Fetch Tasks (Pending Tasks)
-- **Endpoint:** `GET /data/tasks`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/data/tasks` (Used by `useTasks.ts` hook)
+- **Endpoint:** `GET /api/data/tasks`
 - **Extension Usage:** `src/lib/api.ts` -> `API.fetchTasks()`
-- **Description:** Retrieves the user's tasks. The extension filters out completed tasks ("done" status) to populate the "Pending Tasks" UI card.
+- **Description:** Retrieves the user's tasks. The extension filters out completed tasks to populate the "Pending Tasks" UI.
 
 ### Fetch Habits (Protocols)
-- **Endpoint:** `GET /data/habits`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/data/habits` 
+- **Endpoint:** `GET /api/data/habits/all`
 - **Extension Usage:** `src/lib/api.ts` -> `API.fetchHabits()`
-- **Description:** Fetches daily habit entries. The extension evaluates the completion status for the current day to display ongoing tasks in the "Habits" UI card.
+- **Description:** Fetches daily habit entries. Evaluates completion status to display ongoing tasks in the "Habits" UI.
 
 ### Fetch Finance
-- **Endpoint:** `GET /data/finance`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/data/finance` (Used by `useFinance.ts` hook)
+- **Endpoint:** `GET /api/data/finance`
 - **Extension Usage:** `src/lib/api.ts` -> `API.fetchFinance()`
-- **Description:** Retrieves all financial records (income, expense, and special entries). The extension replicates the web app's logic to calculate total expenses and total income for regular entries, displaying the net balance in the "Financial" UI card.
+- **Description:** Retrieves financial records via the generic table handler to display the net balance.
+
+### Fetch Budgets
+- **Endpoint:** `GET /api/data/budgets`
+- **Extension Usage:** `src/lib/api.ts` -> `API.fetchBudgets()`
+- **Description:** Retrieves user budget definitions via the generic table handler.
+
+*Note on Sync:* The `data-service` also offers a unified `GET /api/data/all` sync endpoint which could be utilized in the future for fetching all user state in a single payload.
 
 ---
 
-## 3. AI & Intelligence APIs
+## 4. AI & Intelligence APIs (`/api/ai/*`)
 
 ### AI Enhance / Chat
-- **Endpoint:** `POST /ai/enhance`
-- **Source (Main Project):** Handled in `Whn Web` via `/api/ai/enhance`
+- **Endpoint:** `POST /api/ai/enhance`
 - **Extension Usage:** `src/lib/api.ts` -> `API.sendAIMessage()`
-- **Description:** Sends the user's chat history and current input to the LifeSolver AI core. Used in the extension's "Intelligence" tab to maintain a unified productivity assistant experience.
+- **Description:** Sends the user's chat history and current input to the AI service for processing.
 
 ---
 
-> **Security Note:** All protected endpoints under `/data/*` and `/ai/*` require an `Authorization: Bearer <token>` header to be successfully processed by the main project's backend.
+> **Security Note:** All protected endpoints under `/api/data/*` and `/api/ai/*` require the `Authorization: Bearer <token>` header to be successfully processed by the backend.
