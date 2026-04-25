@@ -17,8 +17,12 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Outfit', system-ui, sans-serif;
 }
+
+.font-header { font-family: 'EB Garamond', serif; }
+.font-stats { font-family: 'Outfit', sans-serif; }
+.font-lists { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 body {
   box-sizing: border-box;

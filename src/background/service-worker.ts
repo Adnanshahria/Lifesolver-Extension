@@ -68,6 +68,9 @@ async function startTracking(domain: string) {
   // Automatically open the extension popup when switching to a social media site
   if (previousDomain !== domain && SOCIAL_MEDIA_DOMAINS.some(d => domain === d || domain.endsWith("." + d))) {
     try {
+      const settings = await chrome.storage.local.get('ls_friction_auto_popup');
+      if (settings.ls_friction_auto_popup === false) return;
+
       // Check if there's an active browser window first
       const windows = await chrome.windows.getAll({ windowTypes: ['normal'] });
       const focusedWindow = windows.find(w => w.focused);

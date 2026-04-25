@@ -9,6 +9,9 @@ export function useFriction() {
   const [heavyScroll, setHeavyScroll] = useState(true);
   const [cognitiveBypass, setCognitiveBypass] = useState(true);
   const [temporalFriction, setTemporalFriction] = useState(true);
+  const [checkoutGate, setCheckoutGate] = useState(true);
+  const [focusGate, setFocusGate] = useState(true);
+  const [autoPopup, setAutoPopup] = useState(true);
   const [feedHide, setFeedHide] = useState(false);
   const [feedHidePlatforms, setFeedHidePlatforms] = useState<Record<string, boolean>>({
     facebook: true,
@@ -29,6 +32,9 @@ export function useFriction() {
         'ls_friction_scroll',
         'ls_friction_cognitive',
         'ls_friction_temporal',
+        'ls_friction_checkout_gate',
+        'ls_friction_focus_gate',
+        'ls_friction_auto_popup',
         'ls_friction_feedhide',
         'ls_friction_feedhide_platforms',
       ])
@@ -41,6 +47,9 @@ export function useFriction() {
         setHeavyScroll(data.ls_friction_scroll !== false);
         setCognitiveBypass(data.ls_friction_cognitive !== false);
         setTemporalFriction(data.ls_friction_temporal !== false);
+        setCheckoutGate(data.ls_friction_checkout_gate !== false);
+        setFocusGate(data.ls_friction_focus_gate !== false);
+        setAutoPopup(data.ls_friction_auto_popup !== false);
         setFeedHide(!!data.ls_friction_feedhide);
         if (data.ls_friction_feedhide_platforms) {
           setFeedHidePlatforms(data.ls_friction_feedhide_platforms as Record<string, boolean>);
@@ -77,6 +86,12 @@ export function useFriction() {
     setCognitiveBypass,
     temporalFriction,
     setTemporalFriction,
+    checkoutGate,
+    setCheckoutGate,
+    focusGate,
+    setFocusGate,
+    autoPopup,
+    setAutoPopup,
     feedHide,
     setFeedHide,
     feedHidePlatforms,

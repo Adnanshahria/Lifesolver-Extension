@@ -28,6 +28,9 @@ export const state = {
     cognitive: true,
     temporal: true,
     feedHide: false,
+    checkoutGate: true,
+    focusGate: true,
+    autoPopup: true,
     feedHidePlatforms: {
       facebook: true,
       youtube: true,

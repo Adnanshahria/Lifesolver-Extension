@@ -13,9 +13,9 @@ export function checkForGates() {
   // Don't re-trigger if the user already answered the gate for this exact URL
   if (state.gateAnsweredForHref === window.location.href) return;
 
-  if (isVideoPage() && !state.focusGateShown && !state.checkoutGateShown) {
+  if (isVideoPage() && state.frictionSettings.focusGate && !state.focusGateShown && !state.checkoutGateShown) {
     showFocusGate();
-  } else if (isCheckoutPage() && !state.checkoutGateShown && !state.focusGateShown) {
+  } else if (isCheckoutPage() && state.frictionSettings.checkoutGate && !state.checkoutGateShown && !state.focusGateShown) {
     showCheckoutGate();
   }
 }
@@ -34,7 +34,13 @@ export function initNavObserver() {
       state.gateAnsweredForHref = null;
       setTimeout(function delayedCheckForGates() { checkForGates(); }, 800);
       setTimeout(function delayedCheckPornBlock() { checkPornBlock(); }, 100);
-      setTimeout(function delayedApplyFeedHide() { applyFeedHide(); }, 300);
+      // Feed hide needs multiple retries because SPA page transitions can be slow.
+      // The applyFeedHide() function itself now has a MutationObserver watcher,
+      // but we still kick it at staggered intervals to cover edge cases.
+      applyFeedHide();
+      setTimeout(function delayedApplyFeedHide1() { applyFeedHide(); }, 500);
+      setTimeout(function delayedApplyFeedHide2() { applyFeedHide(); }, 1500);
+      setTimeout(function delayedApplyFeedHide3() { applyFeedHide(); }, 3000);
     }
   });
 

@@ -23,7 +23,7 @@ export function UsageCard({
   onHideDomain,
 }: UsageCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl shadow-2xl">
+    <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl font-stats shadow-2xl">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-white/80 uppercase">
           <Globe size={12} className="text-cyan-400" /> Digital Footprint

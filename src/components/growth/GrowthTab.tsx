@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, TrendingUp, BookOpen } from 'lucide-react';
+import { Zap, TrendingUp, BookOpen, Lock } from 'lucide-react';
 import type { useFriction } from '../../hooks/useFriction';
 import type { useFrictionAnalytics } from '../../hooks/useFrictionAnalytics';
 import type { useJournal } from '../../hooks/useJournal';
@@ -39,6 +39,7 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
       <text
         x={size / 2} y={size / 2}
         textAnchor="middle" dominantBaseline="central"
+        className="font-stats"
         fill={color} fontSize={size > 60 ? 20 : 14} fontWeight={800}
       >
         {score}
@@ -93,6 +94,7 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
       setter: friction.setVisualFriction,
       key: 'ls_friction_visual',
     },
+    /*
     {
       id: 'pay',
       title: 'Task-Driven Friction (Pay-to-Play)',
@@ -103,6 +105,7 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
       key: 'ls_friction_pay',
       isBeta: true,
     },
+    */
     {
       id: 'bumper',
       title: 'Doom-Scroll Bumper',
@@ -132,12 +135,49 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
     },
     {
       id: 'temporal',
-      title: 'Breathing Gate',
+      title: 'Breathing Gate (Temporal Friction)',
       desc: 'Requires a 4-7-8 breathing exercise (19s) before accessing content through Focus Gates.',
       icon: '🧘',
       state: friction.temporalFriction,
       setter: friction.setTemporalFriction,
       key: 'ls_friction_temporal',
+    },
+    {
+      id: 'checkout',
+      title: 'Checkout Gate (Impulse Guard)',
+      desc: 'Injects a financial intentionality check on Amazon and other checkout pages.',
+      icon: '🛒',
+      state: friction.checkoutGate,
+      setter: friction.setCheckoutGate,
+      key: 'ls_friction_checkout_gate',
+    },
+    {
+      id: 'focus-gate',
+      title: 'Focus Gate (Content Shield)',
+      desc: 'Triggers a shield when opening addictive videos, shorts, or reels.',
+      icon: '🛡️',
+      state: friction.focusGate,
+      setter: friction.setFocusGate,
+      key: 'ls_friction_focus_gate',
+    },
+    {
+      id: 'auto-popup',
+      title: 'Smart Reminder (Auto-Popup)',
+      desc: 'Automatically shows your friction score when you enter a social media site.',
+      icon: '🔔',
+      state: friction.autoPopup,
+      setter: friction.setAutoPopup,
+      key: 'ls_friction_auto_popup',
+    },
+    {
+      id: 'porn',
+      title: 'Dopamine Guard (Adult Filter)',
+      desc: 'Blocks adult content and requires a cognitive bypass to unlock.',
+      icon: '🔞',
+      state: friction.pornBlockerActive,
+      setter: friction.handleTogglePornBlocker,
+      key: 'ls_porn_blocker_active',
+      isSpecial: true,
     },
   ];
 
@@ -145,14 +185,14 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 font-lists">
 
       {/* ── Friction Score Hero Card ────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <ScoreRing score={today?.score ?? 0} />
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-bold text-white/90">Friction Score</h2>
+            <h2 className="text-sm font-bold text-white/90 font-header">Friction Score</h2>
             <p className="text-[10px] text-white/40 mt-0.5">
               {today && today.score >= 70
                 ? "You're resisting autopilot. Keep it up."
@@ -222,19 +262,21 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
             <Zap size={20} className="text-rose-400" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-white/90">Growth Hacker</h2>
+            <h2 className="text-sm font-semibold text-white/90 font-header">Growth Hacker</h2>
             <p className="text-[10px] text-white/40">Advanced Intentional Friction</p>
           </div>
         </div>
-        <div className="text-right opacity-40 grayscale pointer-events-none relative">
-          <div className="absolute -top-1 -right-1 bg-white/10 text-[7px] font-bold text-white/50 px-1 rounded-sm border border-white/10">BETA</div>
-          <div className="text-lg font-bold text-amber-400">{friction.focusCredits}</div>
-          <div className="text-[9px] text-white/40 uppercase tracking-wide">Focus Credits</div>
+        <div className="text-right opacity-80 relative flex flex-col items-end">
+          <div className="absolute -top-1 -right-1 bg-red-500/20 text-[7px] font-bold text-red-400 px-1 rounded-sm border border-red-500/20 flex items-center gap-1">
+            <Lock size={8} /> LOCKED
+          </div>
+          <div className="text-lg font-bold text-red-500">{friction.focusCredits}</div>
+          <div className="text-[9px] text-red-500/60 uppercase tracking-wide">Focus Credits</div>
           <button
             disabled
-            className="mt-1 text-[8px] font-bold border border-amber-500/30 text-amber-500 px-2 py-0.5 rounded-full transition-colors"
+            className="mt-1 text-[8px] font-bold border border-red-500/30 text-red-500/50 px-2 py-0.5 rounded-full"
           >
-            Demo: Earn +15
+            Coming Soon
           </button>
         </div>
       </div>
@@ -287,7 +329,13 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
                     className="peer sr-only"
                     checked={item.state}
                     disabled={(item as any).isBeta}
-                    onChange={(e) => friction.updateFriction(item.key, e.target.checked, item.setter)}
+                    onChange={(e) => {
+                      if ((item as any).isSpecial) {
+                        (item.setter as any)();
+                      } else {
+                        friction.updateFriction(item.key, e.target.checked, item.setter);
+                      }
+                    }}
                   />
                   <div className="peer h-5 w-9 rounded-full bg-white/10 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white/70 after:transition-all after:content-[''] peer-checked:bg-rose-500 peer-checked:after:translate-x-full peer-checked:after:bg-white peer-focus:outline-none"></div>
                 </label>

@@ -15,7 +15,7 @@ interface ChatTabProps {
 
 export function ChatTab({ messages, input, setInput, chatLoading, chatEndRef, onSend, onClear, userName }: ChatTabProps) {
   return (
-    <div className="flex h-full flex-col pb-2">
+    <div className="flex h-full flex-col pb-2 font-lists">
       <div className="flex-1 space-y-4 overflow-y-auto scrollbar-hide pb-4 pr-1">
         {/* Welcome message */}
         <div className="flex w-full items-end gap-2">

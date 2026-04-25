@@ -111,8 +111,8 @@ function buildFocusGate(): HTMLDivElement {
   return gate;
 }
 
-// ─── Breathing Exercise (4-7-8) ──────────────────────────────────────────────
-// Inhale 4s → Hold 7s → Exhale 8s = 19 seconds total
+// ─── Breathing Exercise (Mindful Pause) ─────────────────────────────────────────
+// Inhale 3s → Hold 2s → Exhale 3s = 8 seconds total
 
 function startBreathingExercise(gate: HTMLDivElement, onComplete: () => void) {
   const qBox = gate.querySelector('#ls-q1') as HTMLElement;
@@ -120,13 +120,13 @@ function startBreathingExercise(gate: HTMLDivElement, onComplete: () => void) {
 
   // Circumference of the SVG ring (radius = 70, C = 2πr ≈ 440)
   const CIRCUMFERENCE = 440;
-  const INHALE = 4, HOLD = 7, EXHALE = 8;
+  const INHALE = 3, HOLD = 2, EXHALE = 3;
   const TOTAL = INHALE + HOLD + EXHALE;
 
   qBox.innerHTML = `
     <div id="ls-breathing-gate">
       <div class="ls-breath-instruction" id="ls-breath-text">Breathe in…</div>
-      <div class="ls-breath-subtitle">Complete one 4-7-8 breathing cycle to proceed</div>
+      <div class="ls-breath-subtitle">Complete a quick mindful breath to proceed</div>
 
       <div class="ls-breath-circle-wrap">
         <div class="ls-breath-ring">
@@ -278,7 +278,7 @@ function advanceQuestion(gate: HTMLDivElement, currentQ: number, val: string) {
             }
             // Remove journal div if still present
             gate.querySelector('#ls-journal-prompt')?.remove();
-            setTimeout(removeFocusGate, 1200);
+            setTimeout(removeFocusGate, 400);
           });
         });
       } else {
@@ -295,7 +295,7 @@ function advanceQuestion(gate: HTMLDivElement, currentQ: number, val: string) {
             `;
           }
           gate.querySelector('#ls-journal-prompt')?.remove();
-          setTimeout(removeFocusGate, 1200);
+          setTimeout(removeFocusGate, 400);
         });
       }
     } else {

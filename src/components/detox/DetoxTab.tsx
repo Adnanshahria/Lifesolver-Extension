@@ -14,7 +14,7 @@ interface DetoxTabProps {
 
 export function DetoxTab({ detox, pornBlockerActive, handleTogglePornBlocker }: DetoxTabProps) {
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 font-lists">
       {!detox.detoxActive ? (
         <DetoxSetup
           detoxSelectedPreset={detox.detoxSelectedPreset}

@@ -9,12 +9,21 @@ export function injectFeedHideCss() {
       /* YouTube */
       ytd-browse[page-subtype="home"] ytd-rich-grid-renderer { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
       
-      /* Facebook - Hide feed, stories, and composer */
-      div[role="main"] .ls-feed-container > *:not(#ls-feed-dashboard) { 
+      /* Dashboard must always be visible */
+      #ls-feed-dashboard { display: block !important; opacity: 1 !important; height: auto !important; pointer-events: auto !important; visibility: visible !important; }
+      
+      /* Facebook - Hide feed children but NOT the dashboard */
+      div[role="main"] .ls-feed-container > *:not(#ls-feed-dashboard) {
         display: none !important;
       }
-      /* Fallback for when the class isn't applied yet or correctly */
-      div[role="main"] [role="feed"],
+      /* Facebook - Hide feed items inside [role="feed"], but keep the feed container itself visible for our dashboard */
+      div[role="main"] [role="feed"] > * {
+        display: none !important;
+      }
+      div[role="main"] div[data-pagelet="FeedUnit"] {
+        display: none !important;
+      }
+      
       div[role="main"] [aria-label="Stories"],
       div[role="main"] [aria-label="Create a post"],
       div[role="main"] [aria-label="What's on your mind?"],
@@ -23,7 +32,7 @@ export function injectFeedHideCss() {
       }
       
       /* Twitter / X */
-      [aria-label="Timeline: Your Home Timeline"] { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
+      [aria-label="Timeline: Your Home Timeline"] > * { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
       
       /* Reddit */
       shreddit-feed { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }

@@ -4,26 +4,54 @@ import { recordFrictionEvent } from './frictionAnalytics';
 
 // ─── Visual Friction (Grayscale) ────────────────────────────────────────────
 
+let grayscaleInterval: number | null = null;
+
 export function applyVisualFriction() {
   if (!state.frictionSettings.visual || !isSocialDomain()) {
-    document.body.style.filter = '';
+    if (grayscaleInterval) {
+      clearInterval(grayscaleInterval);
+      grayscaleInterval = null;
+    }
+    document.documentElement.style.filter = '';
     return;
   }
 
-  const timeSpentMs = state.usageData[state.currentDomain] || 0;
-  const timeSpentMins = timeSpentMs / 60000;
+  // Prevent multiple intervals
+  if (grayscaleInterval) return;
 
-  // 0 mins = 0% grayscale, 5 mins = 100% grayscale
-  const grayscalePct = Math.min(100, (timeSpentMins / 5) * 100);
-  document.body.style.filter = `grayscale(${grayscalePct}%)`;
+  const startTime = Date.now();
+  const DURATION = 5 * 60 * 1000; // 5 minutes to full grayscale
+
+  grayscaleInterval = window.setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / DURATION, 1);
+    
+    // Only apply if still enabled
+    if (!state.frictionSettings.visual) {
+      if (grayscaleInterval) {
+        clearInterval(grayscaleInterval);
+        grayscaleInterval = null;
+      }
+      document.documentElement.style.filter = '';
+      return;
+    }
+
+    document.documentElement.style.filter = `grayscale(${progress * 100}%)`;
+    
+    if (progress >= 1 && grayscaleInterval) {
+      clearInterval(grayscaleInterval);
+      grayscaleInterval = null;
+    }
+  }, 1000);
 }
 
 // ─── Pay-to-Play ────────────────────────────────────────────────────────────
 
-let payToPlayOverlay: HTMLDivElement | null = null;
-let payToPlayTimer: number | null = null;
+// let payToPlayOverlay: HTMLDivElement | null = null;
+// let payToPlayTimer: number | null = null;
 
 export function applyPayToPlay() {
+  /*
   if (!state.frictionSettings.pay || !isSocialDomain()) {
     if (payToPlayOverlay) {
       payToPlayOverlay.remove();
@@ -42,9 +70,15 @@ export function applyPayToPlay() {
         payToPlayOverlay = document.createElement('div');
         payToPlayOverlay.id = 'ls-pay-to-play-block';
         payToPlayOverlay.innerHTML = `
-          <div style="position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(10px); flex-direction: column; color: white; font-family: 'Inter', system-ui, sans-serif;">
-            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #f1f5f9;">Out of Focus Credits</h1>
-            <p style="font-size: 14px; opacity: 0.7; margin-bottom: 20px; color: #94a3b8;">Complete a task in LifeSolver to earn more screen time.</p>
+          <div style="position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: rgba(9, 9, 11, 0.98); backdrop-filter: blur(20px); flex-direction: column; color: white; font-family: 'Inter', system-ui, sans-serif; text-align: center;">
+            <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: 0 0 40px rgba(239, 68, 68, 0.1);">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 12px; color: #f1f5f9; letter-spacing: -0.02em; text-transform: uppercase;">Dashboard Locked</h1>
+            <p style="font-size: 16px; opacity: 0.6; margin-bottom: 32px; color: #94a3b8; max-width: 400px; line-height: 1.6;">You have exhausted your **Focus Credits**. <br> Complete a task in LifeSolver to unlock your dashboard and earn more screen time.</p>
+            <div style="display: flex; gap: 12px;">
+               <div style="padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 13px; color: #f1f5f9; font-weight: 600;">0 Credits Available</div>
+            </div>
           </div>
         `;
         document.documentElement.appendChild(payToPlayOverlay);
@@ -71,6 +105,7 @@ export function applyPayToPlay() {
       }
     }, 60000); // Drain 1 credit every minute
   }
+  */
 }
 
 // ─── Doom-Scroll Bumper & Heavy Scroll ──────────────────────────────────────

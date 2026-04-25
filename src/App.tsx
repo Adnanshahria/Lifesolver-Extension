@@ -59,7 +59,7 @@ export default function App() {
       {/* Background ambient lighting */}
       <div className="absolute left-1/2 top-0 h-[150px] w-[300px] -translate-x-1/2 rounded-full bg-cyan-900/20 blur-[100px] pointer-events-none" />
 
-      <AppHeader user={auth.user} onLogout={auth.handleLogout} />
+      <AppHeader user={auth.user} onLogout={auth.handleLogout} onSync={dashboard.loadData} />
       <AppTabs tab={tab} setTab={setTab} />
 
       <main className="relative z-10 flex-1 overflow-y-auto scrollbar-hide px-4 py-4">
