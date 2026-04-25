@@ -3,6 +3,7 @@ import { isVideoPage, isCheckoutPage } from './platform';
 import { showFocusGate } from './focusGate';
 import { showCheckoutGate } from './checkoutGate';
 import { checkPornBlock } from './pornBlocker';
+import { applyFeedHide } from './Friction_FeedHide';
 
 // ─── Gate Watcher ────────────────────────────────────────────────────────────
 
@@ -24,15 +25,16 @@ export function checkForGates() {
 export function initNavObserver() {
   let lastHref = window.location.href;
 
-  const navObserver = new MutationObserver(() => {
+  const navObserver = new MutationObserver(function onDomMutation() {
     if (window.location.href !== lastHref) {
       lastHref = window.location.href;
       // URL changed — reset all gate state so the gate can show on the new page
       state.focusGateShown = false;
       state.checkoutGateShown = false;
       state.gateAnsweredForHref = null;
-      setTimeout(checkForGates, 800);
-      setTimeout(checkPornBlock, 100);
+      setTimeout(function delayedCheckForGates() { checkForGates(); }, 800);
+      setTimeout(function delayedCheckPornBlock() { checkPornBlock(); }, 100);
+      setTimeout(function delayedApplyFeedHide() { applyFeedHide(); }, 300);
     }
   });
 

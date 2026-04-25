@@ -57,12 +57,37 @@ export function isCheckoutPage(): boolean {
   return false;
 }
 
+export function isHomeFeedPage(): boolean {
+  const h = window.location.hostname;
+  const p = window.location.pathname;
+  if (h.includes('facebook.com')) return p === '/' || p === '/home.php';
+  if (h.includes('youtube.com')) return p === '/';
+  if (h.includes('twitter.com') || h.includes('x.com')) return p === '/home';
+  if (h.includes('instagram.com')) return p === '/';
+  if (h.includes('reddit.com')) return p === '/';
+  return true; // Default true for unknown platforms, let findFeedContainer handle it
+}
+
 export function findFeedContainer(): HTMLElement | null {
   const host = window.location.hostname;
-  if (host.includes('youtube.com')) return document.querySelector("ytd-browse[page-subtype='home']");
-  if (host.includes('facebook.com')) return document.querySelector("div[role='main']");
-  if (host.includes('twitter.com') || host.includes('x.com')) return document.querySelector("main[role='main']");
-  if (host.includes('reddit.com')) return document.querySelector('shreddit-feed')?.parentElement || null;
+  if (host.includes('youtube.com')) return document.querySelector("ytd-browse[page-subtype='home']") as HTMLElement;
+  if (host.includes('facebook.com')) {
+    const main = document.querySelector("div[role='main']") as HTMLElement;
+    if (main) {
+      const feed = main.querySelector("[role='feed']");
+      if (feed) {
+        let current = feed as HTMLElement;
+        while (current.parentElement && (current.parentElement as HTMLElement) !== main) {
+          current = current.parentElement as HTMLElement;
+        }
+        return current;
+      }
+      return main.firstElementChild as HTMLElement || main;
+    }
+    return document.querySelector("div[role='main']") as HTMLElement;
+  }
+  if (host.includes('twitter.com') || host.includes('x.com')) return document.querySelector("main[role='main']") as HTMLElement;
+  if (host.includes('reddit.com')) return document.querySelector('shreddit-feed')?.parentElement as HTMLElement || null;
   return null;
 }
 

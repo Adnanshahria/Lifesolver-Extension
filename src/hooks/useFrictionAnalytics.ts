@@ -67,7 +67,8 @@ export function useFrictionAnalytics() {
     const data = await chrome.storage.local.get(['ls_friction_events']);
     const allEvents: Record<string, FrictionEvent[]> = (data.ls_friction_events as Record<string, FrictionEvent[]>) || {};
 
-    const today = new Date().toISOString().split('T')[0];
+    const dToday = new Date();
+    const today = `${dToday.getFullYear()}-${String(dToday.getMonth() + 1).padStart(2, '0')}-${String(dToday.getDate()).padStart(2, '0')}`;
     const todayEvents = allEvents[today] || [];
     setTodaySummary(computeSummary(today, todayEvents));
 
@@ -76,7 +77,7 @@ export function useFrictionAnalytics() {
     for (let i = 0; i < 7; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const events = allEvents[key] || [];
       summaries.push(computeSummary(key, events));
     }
@@ -87,7 +88,7 @@ export function useFrictionAnalytics() {
     for (let i = 0; i < 30; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().split('T')[0];
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const events = allEvents[key] || [];
       if (events.length === 0 && i > 0) break; // no data — streak ends
       const summary = computeSummary(key, events);

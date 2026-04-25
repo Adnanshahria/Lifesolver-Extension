@@ -10,6 +10,13 @@ export function useFriction() {
   const [cognitiveBypass, setCognitiveBypass] = useState(true);
   const [temporalFriction, setTemporalFriction] = useState(true);
   const [feedHide, setFeedHide] = useState(false);
+  const [feedHidePlatforms, setFeedHidePlatforms] = useState<Record<string, boolean>>({
+    facebook: true,
+    youtube: true,
+    twitter: true,
+    instagram: true,
+    reddit: true,
+  });
 
   const loadFrictionState = useCallback(() => {
     chrome.storage.local
@@ -23,6 +30,7 @@ export function useFriction() {
         'ls_friction_cognitive',
         'ls_friction_temporal',
         'ls_friction_feedhide',
+        'ls_friction_feedhide_platforms',
       ])
       .then((data) => {
         setPornBlockerActive(!!data.ls_porn_blocker_active);
@@ -34,6 +42,9 @@ export function useFriction() {
         setCognitiveBypass(data.ls_friction_cognitive !== false);
         setTemporalFriction(data.ls_friction_temporal !== false);
         setFeedHide(!!data.ls_friction_feedhide);
+        if (data.ls_friction_feedhide_platforms) {
+          setFeedHidePlatforms(data.ls_friction_feedhide_platforms as Record<string, boolean>);
+        }
       });
   }, []);
 
@@ -68,6 +79,8 @@ export function useFriction() {
     setTemporalFriction,
     feedHide,
     setFeedHide,
+    feedHidePlatforms,
+    setFeedHidePlatforms,
     updateFriction,
     handleTogglePornBlocker,
     loadFrictionState,

@@ -36,7 +36,7 @@
         "<all_urls>"
       ],
       "js": ["src/content/content.ts"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

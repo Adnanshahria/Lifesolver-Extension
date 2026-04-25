@@ -101,6 +101,7 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
       state: friction.payToPlay,
       setter: friction.setPayToPlay,
       key: 'ls_friction_pay',
+      isBeta: true,
     },
     {
       id: 'bumper',
@@ -173,22 +174,26 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
 
         {/* Today's stats row */}
         {today && today.events.length > 0 && (
-          <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/5">
+          <div className="grid grid-cols-5 gap-1 mt-3 pt-3 border-t border-white/5">
             <div className="text-center">
               <div className="text-xs font-bold text-cyan-400">{today.gatesShown}</div>
               <div className="text-[8px] text-white/30 uppercase">Gates</div>
             </div>
             <div className="text-center">
               <div className="text-xs font-bold text-emerald-400">{today.gatesWentBack}</div>
-              <div className="text-[8px] text-white/30 uppercase">Went Back</div>
+              <div className="text-[8px] text-white/30 uppercase">Back</div>
             </div>
             <div className="text-center">
               <div className="text-xs font-bold text-rose-400">{today.gatesBypassed}</div>
-              <div className="text-[8px] text-white/30 uppercase">Bypassed</div>
+              <div className="text-[8px] text-white/30 uppercase">Bypass</div>
             </div>
             <div className="text-center">
               <div className="text-xs font-bold text-purple-400">{today.journalEntries}</div>
               <div className="text-[8px] text-white/30 uppercase">Journals</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs font-bold text-amber-400">{today.feedHidden}</div>
+              <div className="text-[8px] text-white/30 uppercase">Feeds</div>
             </div>
           </div>
         )}
@@ -221,16 +226,13 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
             <p className="text-[10px] text-white/40">Advanced Intentional Friction</p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-right opacity-40 grayscale pointer-events-none relative">
+          <div className="absolute -top-1 -right-1 bg-white/10 text-[7px] font-bold text-white/50 px-1 rounded-sm border border-white/10">BETA</div>
           <div className="text-lg font-bold text-amber-400">{friction.focusCredits}</div>
           <div className="text-[9px] text-white/40 uppercase tracking-wide">Focus Credits</div>
           <button
-            onClick={() => {
-              const newCredits = friction.focusCredits + 15;
-              friction.setFocusCredits(newCredits);
-              chrome.storage.local.set({ ls_focus_credits: newCredits });
-            }}
-            className="mt-1 text-[8px] font-bold border border-amber-500/30 text-amber-500 px-2 py-0.5 rounded-full hover:bg-amber-500/10 transition-colors"
+            disabled
+            className="mt-1 text-[8px] font-bold border border-amber-500/30 text-amber-500 px-2 py-0.5 rounded-full transition-colors"
           >
             Demo: Earn +15
           </button>
@@ -267,23 +269,60 @@ export function GrowthTab({ friction, analytics, journal }: GrowthTabProps) {
       {section === 'controls' && (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl flex items-center justify-between">
-              <div className="flex gap-3 items-center pr-4">
-                <div className="text-xl">{item.icon}</div>
-                <div>
-                  <h3 className="text-[11px] font-semibold text-white/90">{item.title}</h3>
-                  <p className="mt-0.5 text-[9px] text-white/40 leading-relaxed">{item.desc}</p>
+            <div key={item.id} className={`space-y-2 ${(item as any).isBeta ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 backdrop-blur-xl flex items-center justify-between">
+                <div className="flex gap-3 items-center pr-4">
+                  <div className="text-xl">{item.icon}</div>
+                  <div className="relative">
+                    <h3 className="text-[11px] font-semibold text-white/90">
+                      {item.title}
+                      {(item as any).isBeta && <span className="ml-2 text-[7px] bg-white/10 text-white/50 px-1 py-0.5 rounded border border-white/10">BETA</span>}
+                    </h3>
+                    <p className="mt-0.5 text-[9px] text-white/40 leading-relaxed">{item.desc}</p>
+                  </div>
                 </div>
+                <label className="relative inline-flex cursor-pointer items-center shrink-0">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={item.state}
+                    disabled={(item as any).isBeta}
+                    onChange={(e) => friction.updateFriction(item.key, e.target.checked, item.setter)}
+                  />
+                  <div className="peer h-5 w-9 rounded-full bg-white/10 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white/70 after:transition-all after:content-[''] peer-checked:bg-rose-500 peer-checked:after:translate-x-full peer-checked:after:bg-white peer-focus:outline-none"></div>
+                </label>
               </div>
-              <label className="relative inline-flex cursor-pointer items-center shrink-0">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={item.state}
-                  onChange={(e) => friction.updateFriction(item.key, e.target.checked, item.setter)}
-                />
-                <div className="peer h-5 w-9 rounded-full bg-white/10 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white/70 after:transition-all after:content-[''] peer-checked:bg-rose-500 peer-checked:after:translate-x-full peer-checked:after:bg-white peer-focus:outline-none"></div>
-              </label>
+
+              {/* Sub-toggles for Feed Hide */}
+              {item.id === 'feed' && item.state && (
+                <div className="ml-6 space-y-1.5 border-l border-white/10 pl-3 py-1">
+                  {Object.entries({
+                    facebook: 'Facebook',
+                    youtube: 'YouTube',
+                    twitter: 'X (Twitter)',
+                    instagram: 'Instagram',
+                    reddit: 'Reddit'
+                  }).map(([platformKey, platformName]) => (
+                    <div key={platformKey} className="flex items-center justify-between py-1">
+                      <span className="text-[10px] text-white/70">{platformName}</span>
+                      <label className="relative inline-flex cursor-pointer items-center shrink-0">
+                        <input
+                          type="checkbox"
+                          className="peer sr-only"
+                          checked={friction.feedHidePlatforms[platformKey] ?? true}
+                          onChange={(e) => {
+                            const newPlatforms = { ...friction.feedHidePlatforms, [platformKey]: e.target.checked };
+                            friction.setFeedHidePlatforms(newPlatforms);
+                            chrome.storage.local.set({ ls_friction_feedhide_platforms: newPlatforms });
+                            chrome.runtime.sendMessage({ type: 'LS_FRICTION_UPDATE' });
+                          }}
+                        />
+                        <div className="peer h-3.5 w-6 rounded-full bg-white/10 after:absolute after:left-[1px] after:top-[1px] after:h-3 after:w-3 after:rounded-full after:bg-white/70 after:transition-all after:content-[''] peer-checked:bg-cyan-500 peer-checked:after:translate-x-[10px] peer-checked:after:bg-white peer-focus:outline-none"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

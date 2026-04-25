@@ -1,59 +1,28 @@
-import { state } from './state';
-import { isSocialDomain, findFeedContainer, formatTime } from './platform';
-import { recordFrictionEvent } from './frictionAnalytics';
+import { state } from '../state';
+import { findFeedContainer, formatTime } from '../platform';
+import { recordFrictionEvent } from '../frictionAnalytics';
 
-// ─── Feed Hide (Eradicator) ─────────────────────────────────────────────────
+export const dashboardId = 'ls-feed-dashboard';
 
-export function applyFeedHide() {
-  const cssId = 'ls-feed-hide-css';
-  const dashboardId = 'ls-feed-dashboard';
-  let styleEl = document.getElementById(cssId);
+export function injectDashboard() {
   let dashboardEl = document.getElementById(dashboardId);
+  if (dashboardEl) return;
 
-  if (!state.frictionSettings.feedHide || !isSocialDomain()) {
-    if (styleEl) styleEl.remove();
-    if (dashboardEl) dashboardEl.remove();
-    return;
-  }
-
-  // Inject CSS to hide original feed elements
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = cssId;
-    styleEl.innerHTML = `
-      /* YouTube */
-      ytd-browse[page-subtype="home"] ytd-rich-grid-renderer { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
-      
-      /* Facebook */
-      div[role="main"] [role="feed"] { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
-      
-      /* Twitter / X */
-      [aria-label="Timeline: Your Home Timeline"] { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
-      
-      /* Reddit */
-      shreddit-feed { opacity: 0 !important; pointer-events: none !important; height: 0 !important; overflow: hidden !important; }
-    `;
-    document.head.appendChild(styleEl);
-  }
-
-  // Inject Dashboard
-  if (!dashboardEl) {
-    injectFeedDashboard();
-    recordFrictionEvent('feed_hidden', state.currentDomain);
-  }
-}
-
-function injectFeedDashboard() {
   const container = findFeedContainer();
   if (!container) return;
 
+  container.classList.add('ls-feed-container');
+
   const dashboard = document.createElement('div');
-  dashboard.id = 'ls-feed-dashboard';
+  dashboard.id = dashboardId;
   const shadow = dashboard.attachShadow({ mode: 'open' });
 
-  const totalWasted = Object.values(state.cachedUsage).reduce((a, b) => a + b, 0);
-  const netWorth = state.cachedFinance.reduce(
-    (acc, curr) => (curr.type === 'income' ? acc + curr.amount : acc - curr.amount),
+  const usage = state.cachedUsage || {};
+  const totalWasted = Object.values(usage).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
+  
+  const finance = state.cachedFinance || [];
+  const netWorth = finance.reduce(
+    (acc, curr) => (curr?.type === 'income' ? acc + (curr.amount || 0) : acc - (curr.amount || 0)),
     0,
   );
 
@@ -145,5 +114,14 @@ function injectFeedDashboard() {
     </div>
   `;
 
-  container.appendChild(dashboard);
+  container.prepend(dashboard);
+  recordFrictionEvent('feed_hidden', state.currentDomain);
+}
+
+export function removeDashboard() {
+  const dashboardEl = document.getElementById(dashboardId);
+  if (dashboardEl) dashboardEl.remove();
+
+  const containers = document.querySelectorAll('.ls-feed-container');
+  containers.forEach(c => c.classList.remove('ls-feed-container'));
 }

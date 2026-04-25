@@ -28,5 +28,12 @@ export const state = {
     cognitive: true,
     temporal: true,
     feedHide: false,
+    feedHidePlatforms: {
+      facebook: true,
+      youtube: true,
+      twitter: true,
+      instagram: true,
+      reddit: true,
+    } as Record<string, boolean>,
   },
 };
