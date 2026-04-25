@@ -188,5 +188,44 @@ export const API = {
     } catch {
       return { success: false, error: "Network error" };
     }
-  }
+  },
+
+  // ─── Friction Batch Sync ────────────────────────────────────────────────────
+
+  syncFrictionData: async (payload: {
+    date: string;
+    friction: Record<string, number>;
+    journals: Array<{ id: string; text: string; domain: string; timestamp: number }>;
+    usage: Record<string, number>;
+  }) => {
+    const token = await API.getToken();
+    if (!token) return { success: false, error: "Not authenticated" };
+    try {
+      const apiUrl = await API.getApiUrl();
+      const res = await fetch(`${apiUrl}/data/extension-sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return { success: false, error: `HTTP ${res.status}` };
+      return await res.json();
+    } catch {
+      return { success: false, error: "Network error" };
+    }
+  },
+
+  fetchFrictionHistory: async () => {
+    const token = await API.getToken();
+    if (!token) return { success: false, error: "Not authenticated" };
+    try {
+      const apiUrl = await API.getApiUrl();
+      const res = await fetch(`${apiUrl}/data/extension-sync`, {
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return { success: false, error: `HTTP ${res.status}` };
+      return await res.json();
+    } catch {
+      return { success: false, error: "Network error" };
+    }
+  },
 };

@@ -186,11 +186,126 @@ async function syncData() {
   } catch {}
 }
 
+// ─── Friction Batch Sync ────────────────────────────────────────────────────
+// Syncs friction analytics + journal entries to backend every 30 minutes.
+// Uses delta tracking so only new journals are sent each time.
+
+interface FrictionEvent {
+  type: string;
+  domain: string;
+  timestamp: number;
+  meta?: string;
+}
+
+interface JournalEntry {
+  text: string;
+  domain: string;
+  timestamp: number;
+}
+
+async function syncFrictionToBackend() {
+  const token = await API.getToken();
+  if (!token) return;
+
+  try {
+    const today = getTodayKey();
+    const data = await chrome.storage.local.get([
+      'ls_friction_events',
+      'ls_journal_entries',
+      'ls_last_journal_sync_count',
+      `ls_usage_${today}`,
+    ]);
+
+    const allEvents: Record<string, FrictionEvent[]> = (data.ls_friction_events as Record<string, FrictionEvent[]>) || {};
+    const todayEvents = allEvents[today] || [];
+
+    // Skip if no friction data today
+    if (todayEvents.length === 0) return;
+
+    // ── Compute today's summary ──────────────────────────────────────────
+    const counts: Record<string, number> = {
+      score: 50,
+      gates_shown: 0,
+      gates_went_back: 0,
+      gates_bypassed: 0,
+      bumpers_shown: 0,
+      bumpers_continued: 0,
+      pay_blocked: 0,
+      feed_hidden: 0,
+      journal_count: 0,
+    };
+
+    for (const e of todayEvents) {
+      switch (e.type) {
+        case 'gate_shown': counts.gates_shown++; break;
+        case 'gate_went_back': counts.gates_went_back++; break;
+        case 'gate_bypassed': counts.gates_bypassed++; break;
+        case 'bumper_shown': counts.bumpers_shown++; break;
+        case 'bumper_continued': counts.bumpers_continued++; break;
+        case 'pay_blocked': counts.pay_blocked++; break;
+        case 'feed_hidden': counts.feed_hidden++; break;
+        case 'journal_entry': counts.journal_count++; break;
+      }
+    }
+
+    // Score algorithm (same as frictionAnalytics.ts)
+    let score = 50;
+    score += Math.min(25, counts.gates_went_back * 5);
+    score -= Math.min(25, counts.gates_bypassed * 5);
+    score += Math.min(15, counts.bumpers_shown * 3);
+    score += Math.min(10, counts.journal_count * 2);
+    score -= Math.min(15, counts.pay_blocked * 3);
+    counts.score = Math.max(0, Math.min(100, score));
+
+    // ── Delta journals (only send unsent ones) ───────────────────────────
+    const allJournals: JournalEntry[] = (data.ls_journal_entries as JournalEntry[]) || [];
+    const lastSyncCount = (data.ls_last_journal_sync_count as number) || 0;
+    const newJournals = allJournals.slice(lastSyncCount).map((j, i) => ({
+      id: `j_${today}_${lastSyncCount + i}`,
+      text: j.text,
+      domain: j.domain,
+      timestamp: j.timestamp,
+    }));
+
+    // ── Usage data ───────────────────────────────────────────────────────
+    const rawUsage = data[`ls_usage_${today}`] || {};
+    const normalizedUsage: Record<string, number> = {};
+    for (const [domain, time] of Object.entries(rawUsage)) {
+      let normalized = domain;
+      for (const d of SOCIAL_MEDIA_DOMAINS) {
+        if (domain === d || domain.endsWith("." + d)) { normalized = d; break; }
+      }
+      normalizedUsage[normalized] = (normalizedUsage[normalized] || 0) + (time as number);
+    }
+
+    // ── Send single POST ─────────────────────────────────────────────────
+    const result = await API.syncFrictionData({
+      date: today,
+      friction: counts,
+      journals: newJournals,
+      usage: normalizedUsage,
+    });
+
+    if (result.success) {
+      // Mark journals as synced
+      await chrome.storage.local.set({
+        ls_last_journal_sync_count: allJournals.length,
+        ls_last_friction_sync: Date.now(),
+      });
+      console.log(`[FRICTION-SYNC] Synced: score=${counts.score}, journals=${newJournals.length}`);
+    }
+  } catch (err) {
+    console.warn('[FRICTION-SYNC] Failed:', err);
+  }
+}
+
 chrome.alarms.create("ls_sync_data", { periodInMinutes: 5 });
 chrome.alarms.create("ls_flush_time", { periodInMinutes: 1 });
+chrome.alarms.create("ls_friction_sync", { periodInMinutes: 30 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === "ls_sync_data") await syncData();
   else if (alarm.name === "ls_flush_time") await flushActiveTime();
+  else if (alarm.name === "ls_friction_sync") await syncFrictionToBackend();
   else if (alarm.name === "ls_detox_end") {
     // Detox timer expired — clear state and notify all tabs
     await chrome.storage.local.set({ ls_detox_active: false, ls_detox_end_time: null });
@@ -202,6 +317,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         }
       }
     } catch {}
+    // Also sync friction when detox ends (natural milestone)
+    await syncFrictionToBackend();
   }
 });
 
@@ -269,6 +386,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
   if (msg.type === "LS_FORCE_SYNC") {
     syncData().then(() => sendResponse({ done: true }));
+    return true;
+  }
+  if (msg.type === "LS_FRICTION_SYNC") {
+    syncFrictionToBackend().then(() => sendResponse({ done: true }));
     return true;
   }
   if (msg.type === "LS_CLOSE_TAB") {
@@ -339,5 +460,5 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-chrome.runtime.onInstalled.addListener(() => syncData());
-chrome.runtime.onStartup.addListener(() => syncData());
+chrome.runtime.onInstalled.addListener(() => { syncData(); syncFrictionToBackend(); });
+chrome.runtime.onStartup.addListener(() => { syncData(); syncFrictionToBackend(); });

@@ -1,5 +1,6 @@
 import { state } from './state';
 import { isSocialDomain } from './platform';
+import { recordFrictionEvent } from './frictionAnalytics';
 
 // ─── Visual Friction (Grayscale) ────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ export function applyPayToPlay() {
         `;
         document.documentElement.appendChild(payToPlayOverlay);
         document.documentElement.style.overflow = 'hidden';
+        recordFrictionEvent('pay_blocked', state.currentDomain);
       }
     } else {
       if (payToPlayOverlay) {
@@ -117,6 +119,7 @@ function buildDoomScrollBumper(): HTMLDivElement {
     overlay.remove();
     document.documentElement.style.overflow = '';
     totalPixelsScrolled = 0;
+    recordFrictionEvent('bumper_continued', state.currentDomain);
   });
 
   return overlay;
@@ -152,6 +155,7 @@ export function initScrollFriction() {
           const bumper = buildDoomScrollBumper();
           document.documentElement.appendChild(bumper);
           document.documentElement.style.overflow = 'hidden';
+          recordFrictionEvent('bumper_shown', state.currentDomain);
         }
       }
     },

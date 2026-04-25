@@ -1,0 +1,247 @@
+/* ─── Breathing Gate Animation ────────────────────────────────────────────── */
+
+#ls-breathing-gate {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 24px 0 !important;
+}
+
+.ls-breath-instruction {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+  text-align: center !important;
+  min-height: 28px !important;
+  transition: opacity 0.5s ease !important;
+}
+
+.ls-breath-subtitle {
+  font-size: 11px !important;
+  color: rgba(148, 163, 184, 0.7) !important;
+  text-align: center !important;
+  margin-top: -8px !important;
+}
+
+/* ── Circle Container ── */
+.ls-breath-circle-wrap {
+  position: relative !important;
+  width: 160px !important;
+  height: 160px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ── Outer ring (SVG is injected dynamically) ── */
+.ls-breath-ring {
+  position: absolute !important;
+  inset: 0 !important;
+}
+
+.ls-breath-ring svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ls-breath-ring circle {
+  fill: none !important;
+  stroke-width: 3 !important;
+  stroke-linecap: round !important;
+  transition: stroke 0.5s ease !important;
+}
+
+.ls-breath-ring .ls-ring-bg {
+  stroke: rgba(255, 255, 255, 0.05) !important;
+}
+
+.ls-breath-ring .ls-ring-progress {
+  stroke: #38bdf8 !important;
+  stroke-dasharray: 440 !important;
+  stroke-dashoffset: 440 !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: center !important;
+  transition: stroke-dashoffset 0.3s ease, stroke 0.5s ease !important;
+}
+
+/* ── Inner pulsing orb ── */
+.ls-breath-orb {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 40% 40%,
+    rgba(56, 189, 248, 0.6),
+    rgba(99, 102, 241, 0.4),
+    rgba(168, 85, 247, 0.2)) !important;
+  box-shadow:
+    0 0 30px rgba(56, 189, 248, 0.3),
+    0 0 60px rgba(99, 102, 241, 0.15),
+    inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+  transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 4s ease,
+              background 0.5s ease !important;
+}
+
+/* Inhale → grow */
+.ls-breath-orb.ls-inhale {
+  transform: scale(1.5) !important;
+  box-shadow:
+    0 0 50px rgba(52, 211, 153, 0.4),
+    0 0 80px rgba(52, 211, 153, 0.2),
+    inset 0 0 25px rgba(255, 255, 255, 0.15) !important;
+  background: radial-gradient(circle at 40% 40%,
+    rgba(52, 211, 153, 0.6),
+    rgba(56, 189, 248, 0.4),
+    rgba(99, 102, 241, 0.2)) !important;
+}
+
+/* Hold → glow */
+.ls-breath-orb.ls-hold {
+  transform: scale(1.5) !important;
+  box-shadow:
+    0 0 60px rgba(251, 191, 36, 0.4),
+    0 0 90px rgba(251, 191, 36, 0.2),
+    inset 0 0 30px rgba(255, 255, 255, 0.2) !important;
+  background: radial-gradient(circle at 40% 40%,
+    rgba(251, 191, 36, 0.5),
+    rgba(245, 158, 11, 0.3),
+    rgba(217, 119, 6, 0.15)) !important;
+}
+
+/* Exhale → shrink */
+.ls-breath-orb.ls-exhale {
+  transform: scale(0.7) !important;
+  transition: transform 8s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 8s ease,
+              background 0.5s ease !important;
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(168, 85, 247, 0.1),
+    inset 0 0 15px rgba(255, 255, 255, 0.1) !important;
+  background: radial-gradient(circle at 40% 40%,
+    rgba(168, 85, 247, 0.5),
+    rgba(139, 92, 246, 0.3),
+    rgba(99, 102, 241, 0.15)) !important;
+}
+
+/* ── Timer text inside orb ── */
+.ls-breath-timer {
+  position: absolute !important;
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  z-index: 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ── Phase colors for ring ── */
+.ls-breath-ring .ls-ring-progress.ls-phase-inhale {
+  stroke: #34d399 !important;
+}
+.ls-breath-ring .ls-ring-progress.ls-phase-hold {
+  stroke: #fbbf24 !important;
+}
+.ls-breath-ring .ls-ring-progress.ls-phase-exhale {
+  stroke: #a78bfa !important;
+}
+
+/* ── Completion state ── */
+.ls-breath-complete {
+  animation: ls-breath-done 0.6s ease forwards !important;
+}
+
+@keyframes ls-breath-done {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* ─── Journal Prompt ─────────────────────────────────────────────────────── */
+
+#ls-journal-prompt {
+  width: 100% !important;
+  animation: ls-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+}
+
+.ls-journal-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #e2e8f0 !important;
+  margin-bottom: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.ls-journal-textarea {
+  width: 100% !important;
+  min-height: 72px !important;
+  max-height: 120px !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  background: rgba(56, 189, 248, 0.05) !important;
+  color: #e2e8f0 !important;
+  font-size: 12px !important;
+  font-family: inherit !important;
+  resize: vertical !important;
+  outline: none !important;
+  transition: border-color 0.3s, box-shadow 0.3s !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+}
+
+.ls-journal-textarea:focus {
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.1) !important;
+}
+
+.ls-journal-textarea::placeholder {
+  color: rgba(148, 163, 184, 0.5) !important;
+}
+
+.ls-journal-actions {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+  justify-content: flex-end !important;
+}
+
+.ls-journal-submit {
+  padding: 8px 20px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+  background: rgba(52, 211, 153, 0.1) !important;
+  color: #6ee7b7 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+}
+
+.ls-journal-submit:hover {
+  background: rgba(52, 211, 153, 0.2) !important;
+  border-color: rgba(52, 211, 153, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+
+.ls-journal-skip {
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  color: rgba(148, 163, 184, 0.6) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+}
+
+.ls-journal-skip:hover {
+  color: rgba(148, 163, 184, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}

@@ -1,5 +1,6 @@
 import { state } from './state';
 import { isSocialDomain, findFeedContainer, formatTime } from './platform';
+import { recordFrictionEvent } from './frictionAnalytics';
 
 // ─── Feed Hide (Eradicator) ─────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export function applyFeedHide() {
   // Inject Dashboard
   if (!dashboardEl) {
     injectFeedDashboard();
+    recordFrictionEvent('feed_hidden', state.currentDomain);
   }
 }
 

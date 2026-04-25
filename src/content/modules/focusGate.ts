@@ -1,6 +1,7 @@
 import { state } from './state';
 import { detectPlatform, formatTime } from './platform';
 import { snapshotAndPauseAll, startGatePauseObserver, stopGatePauseObserver, restoreVideos } from './videoController';
+import { recordFrictionEvent } from './frictionAnalytics';
 
 // ─── Answer state ─────────────────────────────────────────────────────────────
 const answers: Record<string, string> = {};
@@ -82,7 +83,7 @@ function buildFocusGate(): HTMLDivElement {
           </div>
           <div class="ls-choices">
             <button class="ls-choice" data-q="1" data-val="yes" id="ls-focus-yes-btn">
-              <span class="ls-choice-icon">✓</span> Yes, I genuinely need it (<span id="ls-focus-timer">10</span>s)
+              <span class="ls-choice-icon">✓</span> Yes, I genuinely need it
             </button>
             <button class="ls-choice ls-choice-no" data-q="1" data-val="no">
               <span class="ls-choice-icon">✗</span> No, just scrolling
@@ -110,22 +111,197 @@ function buildFocusGate(): HTMLDivElement {
   return gate;
 }
 
+// ─── Breathing Exercise (4-7-8) ──────────────────────────────────────────────
+// Inhale 4s → Hold 7s → Exhale 8s = 19 seconds total
+
+function startBreathingExercise(gate: HTMLDivElement, onComplete: () => void) {
+  const qBox = gate.querySelector('#ls-q1') as HTMLElement;
+  if (!qBox) { onComplete(); return; }
+
+  // Circumference of the SVG ring (radius = 70, C = 2πr ≈ 440)
+  const CIRCUMFERENCE = 440;
+  const INHALE = 4, HOLD = 7, EXHALE = 8;
+  const TOTAL = INHALE + HOLD + EXHALE;
+
+  qBox.innerHTML = `
+    <div id="ls-breathing-gate">
+      <div class="ls-breath-instruction" id="ls-breath-text">Breathe in…</div>
+      <div class="ls-breath-subtitle">Complete one 4-7-8 breathing cycle to proceed</div>
+
+      <div class="ls-breath-circle-wrap">
+        <div class="ls-breath-ring">
+          <svg viewBox="0 0 160 160">
+            <circle class="ls-ring-bg" cx="80" cy="80" r="70"/>
+            <circle class="ls-ring-progress" id="ls-ring-prog" cx="80" cy="80" r="70"/>
+          </svg>
+        </div>
+        <div class="ls-breath-orb" id="ls-breath-orb"></div>
+        <div class="ls-breath-timer" id="ls-breath-countdown">${TOTAL}</div>
+      </div>
+    </div>
+  `;
+
+  const orb = gate.querySelector('#ls-breath-orb') as HTMLElement;
+  const text = gate.querySelector('#ls-breath-text') as HTMLElement;
+  const ring = gate.querySelector('#ls-ring-prog') as SVGCircleElement;
+  const countdown = gate.querySelector('#ls-breath-countdown') as HTMLElement;
+  if (!orb || !text || !ring || !countdown) { onComplete(); return; }
+
+  let elapsed = 0;
+  let phase: 'inhale' | 'hold' | 'exhale' = 'inhale';
+
+  // Start inhale immediately
+  orb.className = 'ls-breath-orb ls-inhale';
+  text.textContent = 'Breathe in…';
+  ring.classList.add('ls-phase-inhale');
+
+  const interval = setInterval(() => {
+    elapsed++;
+    const remaining = TOTAL - elapsed;
+    countdown.textContent = remaining.toString();
+
+    // Update ring progress
+    const progress = elapsed / TOTAL;
+    const offset = CIRCUMFERENCE * (1 - progress);
+    ring.style.strokeDashoffset = offset.toString();
+
+    // Phase transitions
+    if (elapsed === INHALE && phase === 'inhale') {
+      phase = 'hold';
+      orb.className = 'ls-breath-orb ls-hold';
+      text.textContent = 'Hold…';
+      ring.classList.remove('ls-phase-inhale');
+      ring.classList.add('ls-phase-hold');
+    } else if (elapsed === INHALE + HOLD && phase === 'hold') {
+      phase = 'exhale';
+      orb.className = 'ls-breath-orb ls-exhale';
+      text.textContent = 'Breathe out…';
+      ring.classList.remove('ls-phase-hold');
+      ring.classList.add('ls-phase-exhale');
+    }
+
+    if (elapsed >= TOTAL) {
+      clearInterval(interval);
+      text.textContent = '✓ Mindful moment complete';
+      orb.className = 'ls-breath-orb ls-breath-complete';
+      countdown.textContent = '✓';
+      setTimeout(onComplete, 800);
+    }
+  }, 1000);
+}
+
+// ─── Journal Prompt ──────────────────────────────────────────────────────────
+
+function showJournalPrompt(gate: HTMLDivElement, onDone: () => void) {
+  const questionsContainer = gate.querySelector('#ls-questions') as HTMLElement;
+  if (!questionsContainer) { onDone(); return; }
+
+  const journalDiv = document.createElement('div');
+  journalDiv.id = 'ls-journal-prompt';
+  journalDiv.innerHTML = `
+    <div class="ls-question" style="border-color: rgba(56, 189, 248, 0.15);">
+      <div class="ls-journal-label">
+        <span style="font-size: 18px;">📝</span>
+        Why are you here? (one honest sentence)
+      </div>
+      <textarea
+        class="ls-journal-textarea"
+        id="ls-journal-input"
+        placeholder="e.g. I'm stressed and avoiding my assignment…"
+        maxlength="300"
+      ></textarea>
+      <div class="ls-journal-actions">
+        <button class="ls-journal-skip" id="ls-journal-skip">Skip</button>
+        <button class="ls-journal-submit" id="ls-journal-save">Save & Continue</button>
+      </div>
+    </div>
+  `;
+  questionsContainer.appendChild(journalDiv);
+
+  // Focus the textarea
+  setTimeout(() => {
+    const textarea = gate.querySelector('#ls-journal-input') as HTMLTextAreaElement;
+    textarea?.focus();
+  }, 400);
+
+  // Save handler
+  gate.querySelector('#ls-journal-save')?.addEventListener('click', async () => {
+    const textarea = gate.querySelector('#ls-journal-input') as HTMLTextAreaElement;
+    const text = textarea?.value?.trim();
+    if (text) {
+      // Store journal entry
+      const entry = {
+        text,
+        domain: state.currentDomain || window.location.hostname,
+        timestamp: Date.now(),
+      };
+      const data = await chrome.storage.local.get(['ls_journal_entries']);
+      const entries = (data.ls_journal_entries as any[]) || [];
+      entries.push(entry);
+      // Keep last 100
+      if (entries.length > 100) entries.splice(0, entries.length - 100);
+      await chrome.storage.local.set({ ls_journal_entries: entries });
+
+      // Record analytics event
+      recordFrictionEvent('journal_entry', state.currentDomain, text);
+    }
+    onDone();
+  });
+
+  // Skip handler
+  gate.querySelector('#ls-journal-skip')?.addEventListener('click', () => {
+    onDone();
+  });
+}
+
 // ─── Advance Question Logic ──────────────────────────────────────────────────
 function advanceQuestion(gate: HTMLDivElement, currentQ: number, val: string) {
   if (currentQ === 1) {
     if (val === 'yes') {
-      const qBox = gate.querySelector('#ls-q1') as HTMLElement;
-      if (qBox) {
-        qBox.innerHTML = `
-          <div class="ls-animate" style="text-align: center; padding: 20px 0;">
-            <div style="font-size: 32px; margin-bottom: 12px;">💎</div>
-            <div style="color: #34d399; font-weight: 700; font-size: 16px; margin-bottom: 4px;">Intentionality Confirmed</div>
-            <div style="color: #94a3b8; font-size: 12px;">Proceeding with your goals in mind.</div>
-          </div>
-        `;
+      // Record analytics: bypassed
+      recordFrictionEvent('gate_bypassed', state.currentDomain);
+
+      // If temporal friction is on, start breathing exercise instead of just a timer
+      if (state.frictionSettings.temporal) {
+        startBreathingExercise(gate, () => {
+          // After breathing, show journal prompt
+          showJournalPrompt(gate, () => {
+            const qBox = gate.querySelector('#ls-q1') as HTMLElement;
+            if (qBox) {
+              qBox.innerHTML = `
+                <div class="ls-animate" style="text-align: center; padding: 20px 0;">
+                  <div style="font-size: 32px; margin-bottom: 12px;">💎</div>
+                  <div style="color: #34d399; font-weight: 700; font-size: 16px; margin-bottom: 4px;">Intentionality Confirmed</div>
+                  <div style="color: #94a3b8; font-size: 12px;">Proceeding with your goals in mind.</div>
+                </div>
+              `;
+            }
+            // Remove journal div if still present
+            gate.querySelector('#ls-journal-prompt')?.remove();
+            setTimeout(removeFocusGate, 1200);
+          });
+        });
+      } else {
+        // No temporal friction: just show journal then proceed
+        showJournalPrompt(gate, () => {
+          const qBox = gate.querySelector('#ls-q1') as HTMLElement;
+          if (qBox) {
+            qBox.innerHTML = `
+              <div class="ls-animate" style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 32px; margin-bottom: 12px;">💎</div>
+                <div style="color: #34d399; font-weight: 700; font-size: 16px; margin-bottom: 4px;">Intentionality Confirmed</div>
+                <div style="color: #94a3b8; font-size: 12px;">Proceeding with your goals in mind.</div>
+              </div>
+            `;
+          }
+          gate.querySelector('#ls-journal-prompt')?.remove();
+          setTimeout(removeFocusGate, 1200);
+        });
       }
-      setTimeout(removeFocusGate, 1500);
     } else {
+      // User said "No, just scrolling" → record went_back
+      recordFrictionEvent('gate_went_back', state.currentDomain);
+
       showFinalActions(gate, true);
       const qBox = gate.querySelector('#ls-q1') as HTMLElement;
       if (qBox) {
@@ -153,30 +329,11 @@ function showFinalActions(_gate: HTMLDivElement, suggestBack: boolean) {
 
 // ─── Attach Gate Events ──────────────────────────────────────────────────────
 export function attachGateEvents(gate: HTMLDivElement) {
+  // No longer need timer countdown — breathing exercise replaces it
   const yesBtn = gate.querySelector('#ls-focus-yes-btn') as HTMLButtonElement | null;
-  const timerSpan = gate.querySelector('#ls-focus-timer') as HTMLSpanElement | null;
 
-  if (state.frictionSettings.temporal && yesBtn && timerSpan) {
-    yesBtn.style.pointerEvents = 'none';
-    yesBtn.style.opacity = '0.5';
-    let secondsLeft = 10;
-    const interval = setInterval(() => {
-      secondsLeft--;
-      if (!document.body.contains(gate)) {
-        clearInterval(interval);
-        return;
-      }
-      if (secondsLeft <= 0) {
-        clearInterval(interval);
-        if (timerSpan) timerSpan.textContent = '0';
-        yesBtn.style.pointerEvents = 'auto';
-        yesBtn.style.opacity = '1';
-        yesBtn.innerHTML = `<span class="ls-choice-icon">✓</span> Yes, I genuinely need it`;
-      } else {
-        if (timerSpan) timerSpan.textContent = secondsLeft.toString();
-      }
-    }, 1000);
-  } else if (yesBtn && timerSpan) {
+  // Remove the old timer text from the button
+  if (yesBtn) {
     yesBtn.innerHTML = `<span class="ls-choice-icon">✓</span> Yes, I genuinely need it`;
   }
 
@@ -214,6 +371,9 @@ export function showFocusGate() {
   if (state.focusGateShown || state.checkoutGateShown) return;
   state.focusGateShown = true;
   state.gateIsOpen = true;
+
+  // Record analytics: gate shown
+  recordFrictionEvent('gate_shown', state.currentDomain);
 
   snapshotAndPauseAll();
   startGatePauseObserver();

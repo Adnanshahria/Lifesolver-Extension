@@ -4,6 +4,8 @@ import { useDashboardData } from './hooks/useDashboardData';
 import { useDetox } from './hooks/useDetox';
 import { useFriction } from './hooks/useFriction';
 import { useChat } from './hooks/useChat';
+import { useFrictionAnalytics } from './hooks/useFrictionAnalytics';
+import { useJournal } from './hooks/useJournal';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { LoginScreen } from './components/LoginScreen';
 import { AppHeader } from './components/AppHeader';
@@ -26,6 +28,8 @@ export default function App() {
     budgetRemaining: dashboard.budgetRemaining,
     totalSpentMs: dashboard.totalSpentMs,
   });
+  const frictionAnalytics = useFrictionAnalytics();
+  const journal = useJournal();
 
   // Load friction state on mount
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function App() {
             handleTogglePornBlocker={friction.handleTogglePornBlocker}
           />
         )}
-        {tab === 'growth' && <GrowthTab friction={friction} />}
+        {tab === 'growth' && <GrowthTab friction={friction} analytics={frictionAnalytics} journal={journal} />}
       </main>
     </div>
   );
