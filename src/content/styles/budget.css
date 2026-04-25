@@ -1,0 +1,45 @@
+/* ─── Budget Progress ─────────────────────────────────────────────────────── */
+.ls-budget-bar {
+  height: 4px !important;
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 10px !important;
+  margin-top: 8px !important;
+  overflow: hidden !important;
+}
+
+.ls-budget-fill {
+  height: 100% !important;
+  border-radius: 10px !important;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ls-budget-fill-ok {
+  background: linear-gradient(90deg, #10b981, #34d399) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+}
+
+.ls-budget-fill-over {
+  background: linear-gradient(90deg, #ef4444, #f87171) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* ─── Checkout Specific Polish ────────────────────────────────────────────── */
+.ls-stat-budget-over {
+  color: #f87171 !important;
+}
+.ls-stat-budget-ok {
+  color: #34d399 !important;
+}
+
+.ls-btn-proceed-secondary {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  margin-top: 8px !important;
+}
+
+.ls-btn-proceed-secondary:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}

@@ -325,6 +325,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     });
     return true;
   }
+  if (msg.type === "LS_PORN_BLOCKER_UPDATE") {
+    // Notify all tabs about the porn blocker state change
+    chrome.tabs.query({}).then(tabs => {
+      for (const tab of tabs) {
+        if (tab.id && tab.url) {
+          chrome.tabs.sendMessage(tab.id, { type: "LS_PORN_BLOCKER_UPDATE", active: msg.active }).catch(() => {});
+        }
+      }
+    });
+    sendResponse({ success: true });
+    return true;
+  }
 });
 
 chrome.runtime.onInstalled.addListener(() => syncData());
