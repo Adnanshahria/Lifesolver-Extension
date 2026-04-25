@@ -8,6 +8,7 @@ import { checkDetoxBlock, removeDetoxBlock } from './modules/detoxOverlay';
 import { checkPornBlock } from './modules/pornBlocker';
 import { checkForGates } from './modules/navObserver';
 import { initNavObserver } from './modules/navObserver';
+import { syncAuthFromMainSite } from './modules/syncAuth';
 
 // ─── Data Loading ────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ try {
 // ─── Initialize ─────────────────────────────────────────────────────────────
 
 loadData();
+syncAuthFromMainSite();
 checkDetoxBlock();
 checkPornBlock();
 initNavObserver();
